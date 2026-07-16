@@ -5,7 +5,7 @@ import { auth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 interface StoryFile {
   file?: File | null;
@@ -586,7 +586,7 @@ const StoryUpload: React.FC = () => {
       const formData = new FormData();
       formData.append('file', fileToUpload);
 
-      const response = await fetch(`http://127.0.0.1:8000/stories/create?${params.toString()}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/create?${params.toString()}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

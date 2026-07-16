@@ -26,7 +26,7 @@ const creatorLandingBenefits = [
   { icon: Heart, title: "Priority Support", description: "Faster help for active AI creators." },
 ];
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://api.kirnagram.com";
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
 const AICreator = () => {

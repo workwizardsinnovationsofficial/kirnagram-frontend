@@ -43,7 +43,7 @@ const EditCreatorProfile = () => {
       }
       try {
         const token = await user.getIdToken();
-        const res = await fetch("http://127.0.0.1:8000/profile/me", {
+        const res = await fetch("https://api.kirnagram.com/profile/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
@@ -80,7 +80,7 @@ const EditCreatorProfile = () => {
       const user = auth.currentUser;
       if (!user) throw new Error("Not authenticated");
       const token = await user.getIdToken();
-      const res = await fetch("http://127.0.0.1:8000/ai-creator/profile", {
+      const res = await fetch("https://api.kirnagram.com/ai-creator/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

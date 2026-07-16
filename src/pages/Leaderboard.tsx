@@ -19,7 +19,7 @@ type UserSummary = {
   total_remix_count?: number;
 };
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 const getDisplayName = (user: UserSummary) => {
   return user.full_name || user.username || user.public_id || "Creator";

@@ -137,7 +137,7 @@ const BecomePublisher = () => {
       setIsSubmitting(true);
       const token = await user.getIdToken();
 
-      const res = await fetch("http://127.0.0.1:8000/ads/publisher-applications", {
+      const res = await fetch("https://api.kirnagram.com/ads/publisher-applications", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

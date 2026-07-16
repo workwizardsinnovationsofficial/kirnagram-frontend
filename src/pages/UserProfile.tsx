@@ -30,7 +30,7 @@ import creatorLog1o from "@/assets/ai-creator-icon-2.png";
 import { auth } from "@/firebase";
 import { useEffect, useRef, useState } from "react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 const tabs = [
   { id: "posts", label: "Posts", icon: Grid },
@@ -245,7 +245,7 @@ const UserProfile = () => {
       setAboutLoading(true);
       const token = await currentUser.getIdToken();
       const targetIdentifier = profile.firebase_uid || profile.username || userId;
-      const res = await fetch(`http://127.0.0.1:8000/profile/about/${targetIdentifier}`, {
+      const res = await fetch(`https://api.kirnagram.com/profile/about/${targetIdentifier}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

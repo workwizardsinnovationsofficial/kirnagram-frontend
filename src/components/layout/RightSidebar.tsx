@@ -12,7 +12,7 @@ type ApprovedPrompt = {
   remixes_count?: number;
 };
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 export function RightSidebar() {
   const navigate = useNavigate();

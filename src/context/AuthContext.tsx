@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/auth/refresh-token", {
+      const response = await fetch("https://api.kirnagram.com/auth/refresh-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),

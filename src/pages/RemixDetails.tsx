@@ -7,8 +7,8 @@ import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
 import { Download, ArrowLeft } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
-const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "http://127.0.0.1:8001";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "https://api-r.kirnagram.com";
 
 // ⏱️ REQUEST TIMEOUT (30 seconds for main requests, 15 for optional)
 const REMIX_REQUEST_TIMEOUT = 30000; // 30 seconds for critical remix fetch

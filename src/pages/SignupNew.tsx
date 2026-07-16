@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { setAuthSession } from "@/firebase";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type SignupStep =
   | "name_input"
