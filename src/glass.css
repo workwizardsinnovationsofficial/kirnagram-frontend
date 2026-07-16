@@ -1,0 +1,60 @@
+@media (prefers-color-scheme: dark) {
+  .glass-header .icon-outline {
+    stroke: #fff !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
+    opacity: 1 !important;
+    color: #fff !important;
+    filter: none !important;
+  }
+}
+.glass-header {
+  background: rgba(30, 30, 30, 0.6); /* semi-transparent dark for dark mode */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  @media (max-width: 1023px) {
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85) !important; /* more white, less grey, more visible */
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: blur(8px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
+    }
+  }
+  .glass-header .text-muted-foreground,
+  .glass-header .text-foreground {
+    color: #222 !important;
+  }
+  .glass-header button,
+  .glass-header .rounded-lg {
+    border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(255,255,255,0.18);
+  }
+  /* Icon outline for theme and notification icons */
+  .glass-header .icon-outline {
+    stroke: #111 !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
+    opacity: 1 !important;
+    color: #111 !important;
+    filter: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .glass-header {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    border-radius: 0 0 16px 16px;
+    z-index: 1000;
+  }
+}
