@@ -155,6 +155,7 @@ const EditProfile = (): JSX.Element => {
   const isUsernameChanged = (formData.username || "").trim() !== (initialUsernameRef.current || "").trim();
   const isEmailChanged = (formData.email || "").trim().toLowerCase() !== (initialEmailRef.current || "").trim().toLowerCase();
   const isPublicIdChanged = (formData.publicId || "").trim().toLowerCase() !== (initialPublicIdRef.current || "").trim().toLowerCase();
+  const hasExistingEmail = Boolean((initialEmailRef.current || "").trim());
   const isNameChangeBlocked = isNameChanged && fullNameCooldownDays > 0;
   const requiresOtp = false;
   const requiresEmailOtp = false;
@@ -1244,6 +1245,7 @@ const EditProfile = (): JSX.Element => {
       if (response.ok) {
         initialNameRef.current = (formData.name || "").trim();
         initialPhoneRef.current = formData.phone || "";
+        initialEmailRef.current = (formData.email || "").trim().toLowerCase();
         setOtpVerified(true);
         setOtpSent(false);
         setOtpCode("");
@@ -1893,15 +1895,18 @@ const EditProfile = (): JSX.Element => {
               <input
                 name="email"
                 value={formData.email}
-                readOnly
-                disabled
+                readOnly={!hasExistingEmail}
+                disabled={hasExistingEmail}
+                onChange={handleChange}
                 type="email"
                 placeholder="Enter your email"
-                className="w-full pl-12 pr-4 py-3 rounded-xl text-sm placeholder:text-muted-foreground transition-all bg-muted/30 border border-border/60 text-muted-foreground cursor-not-allowed"
+                className={`w-full pl-12 pr-4 py-3 rounded-xl text-sm placeholder:text-muted-foreground transition-all border border-border/60 ${hasExistingEmail ? "bg-muted/30 text-muted-foreground cursor-not-allowed" : "bg-background/80 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"}`}
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Your email is fixed to the value used at signup.
+              {hasExistingEmail
+                ? "This email is locked after it has been saved once."
+                : "Add your email once. After it is saved, it will be locked for future changes."}
             </p>
           </div>
           <div>
