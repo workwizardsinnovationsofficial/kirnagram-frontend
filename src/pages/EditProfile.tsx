@@ -158,7 +158,7 @@ const EditProfile = (): JSX.Element => {
   const hasExistingEmail = Boolean((initialEmailRef.current || "").trim());
   const isNameChangeBlocked = isNameChanged && fullNameCooldownDays > 0;
   const requiresOtp = false;
-  const requiresEmailOtp = false;
+  const requiresEmailOtp = isEmailChanged;
   const isSaveDisabled =
     saving ||
     usernameStatus === "checking" ||
@@ -670,6 +670,9 @@ const EditProfile = (): JSX.Element => {
       setEmailOtpCode("");
       setEmailOtpMessage("Email verified successfully.");
       setEmailOtpMessageIsError(false);
+      // Persist the verified email locally so the UI locks the field
+      initialEmailRef.current = email;
+      setFormData((prev) => ({ ...prev, email }));
       toast({ title: "Email verified", description: data.message || "Your email has been verified." });
     } catch (error) {
       setEmailOtpVerified(false);
@@ -1895,7 +1898,7 @@ const EditProfile = (): JSX.Element => {
               <input
                 name="email"
                 value={formData.email}
-                readOnly={!hasExistingEmail}
+                readOnly={hasExistingEmail}
                 disabled={hasExistingEmail}
                 onChange={handleChange}
                 type="email"
@@ -1908,6 +1911,56 @@ const EditProfile = (): JSX.Element => {
                 ? "This email is locked after it has been saved once."
                 : "Add your email once. After it is saved, it will be locked for future changes."}
             </p>
+
+            {/* Email verification controls for users adding an email */}
+            {!hasExistingEmail && (
+              <div className="mt-3 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={sendEmailOtp}
+                    disabled={emailSendingOtp || !(formData.email || "").trim()}
+                    className="px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {emailSendingOtp ? "Sending..." : "Send verification"}
+                  </button>
+                  {emailOtpSent && (
+                    <button
+                      type="button"
+                      onClick={sendEmailOtp}
+                      disabled={emailSendingOtp}
+                      className="px-3 py-2 rounded-xl border border-border text-sm hover:bg-muted"
+                    >
+                      Resend
+                    </button>
+                  )}
+                </div>
+
+                {emailOtpSent && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      name="emailOtpCode"
+                      value={emailOtpCode}
+                      onChange={(e) => setEmailOtpCode(e.target.value)}
+                      placeholder="Enter OTP"
+                      className="flex-1 pl-4 pr-4 py-2 rounded-xl text-sm bg-muted/50 border border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={verifyEmailOtp}
+                      disabled={emailVerifyingOtp || emailOtpCode.trim().length !== 6}
+                      className="px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-cyan-400 text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {emailVerifyingOtp ? "Verifying..." : "Verify"}
+                    </button>
+                  </div>
+                )}
+
+                {emailOtpMessage ? (
+                  <p className={`text-xs ${emailOtpMessageIsError ? "text-red-500" : "text-green-400"}`}>{emailOtpMessage}</p>
+                ) : null}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-foreground">Phone</label>
