@@ -33,6 +33,13 @@ export interface Notification {
   description: string;
   timestamp: string;
   read: boolean;
+  remix_id?: string;
+  post_id?: string;
+  post_owner_id?: string;
+  from_user_username?: string;
+  from_user_gender?: string;
+  type?: string;
+  status?: string;
 }
 
 interface NotificationStore {
@@ -52,12 +59,22 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 
   setNotifications: (notifications) => {
     const readIds = loadReadIds();
-    const merged = notifications.map((n) => ({
-      ...n,
-      read: n.read || readIds.has(n.id),
-    }));
-    const unreadCount = merged.filter((n) => !n.read).length;
-    set({ notifications: merged, unreadCount });
+    set((state) => {
+      const currentMap = new Map(state.notifications.map((n) => [n.id, n]));
+      const incoming = notifications.map((notification) => {
+        const existing = currentMap.get(notification.id);
+        return {
+          ...notification,
+          read: existing?.read ?? notification.read ?? readIds.has(notification.id),
+        };
+      });
+      const merged = [
+        ...incoming,
+        ...state.notifications.filter((existing) => !incoming.some((n) => n.id === existing.id)),
+      ];
+      const unreadCount = merged.filter((n) => !n.read).length;
+      return { notifications: merged, unreadCount };
+    });
   },
 
   addNotification: (notification) => {

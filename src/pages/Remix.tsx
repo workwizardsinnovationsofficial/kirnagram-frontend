@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
+import { useNotificationStore } from "@/store/notificationStore";
 import { Download, Image as ImageIcon, Sparkles, Upload } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
@@ -114,8 +115,31 @@ const Remix = () => {
   const [reviewData, setReviewData] = useState<{ review_rating?: string; review_comment?: string; review_improvement?: string } | null>(null);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  const [progressMessage, setProgressMessage] = useState<string>("Waiting to start remix...");
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const generateAbortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
   const sourceState = (location.state || null) as RemixSourceState | null;
+
+  const sanitizePublicDescription = (text?: string) => {
+    if (!text) return "";
+    // Remove template tokens like {var} or {{var}}, bracketed hints like [uploaded photo],
+    // and any parenthetical internal instructions. Collapse whitespace.
+    return text
+      .replace(/{{?\s*[^{}]+\s*}?}/g, "")
+      .replace(/\[[^\]]+\]/g, "")
+      .replace(/\([^)]*\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const stopGeneration = () => {
     if (generateAbortRef.current) {
@@ -130,11 +154,10 @@ const Remix = () => {
   };
 
   const handleBack = () => {
-    if (!confirmStopRemixing()) {
-      return;
-    }
-
     if (generating) {
+      if (!confirmStopRemixing()) {
+        return;
+      }
       stopGeneration();
       toast({
         title: "Remix stopped",
@@ -335,14 +358,11 @@ const Remix = () => {
     }
 
     if (!prompt) return { style: "", description: "", image: "" };
+    const rawDesc = prompt.prompt_description || prompt.description || "";
+    const publicDesc = sanitizePublicDescription(rawDesc);
     return {
       style: prompt.style_name || "Prompt Style",
-      description:
-        prompt.prompt_description ||
-        prompt.description ||
-        prompt.prompt ||
-        prompt.prompt_text ||
-        "",
+      description: publicDesc,
       image: orderedImages[0] || "",
     };
   }, [prompt]);
@@ -368,6 +388,8 @@ const Remix = () => {
       const user = auth.currentUser;
       if (!user) throw new Error("Not logged in");
       const token = await user.getIdToken();
+
+      setProgressMessage("Preparing remix generation...");
 
       const promptVariables = Array.isArray(prompt?.prompt_variables) ? prompt.prompt_variables : [];
       const missingRequired = promptVariables.filter((item) => {
@@ -403,6 +425,7 @@ const Remix = () => {
       const abortController = new AbortController();
       generateAbortRef.current = abortController;
 
+      setProgressMessage("Uploading assets and generating your remix...");
       const res = await fetch(`${REMIX_API_BASE}/remix/generate`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -426,7 +449,8 @@ const Remix = () => {
       } catch {
         setOutputUrl(data.image_url);
       }
-      setRemixId(data.remix_id || null);
+      const generatedRemixId = data.remix_id || null;
+      setRemixId(generatedRemixId);
 
       // 🔥 REFRESH PROMPT DATA (IMPORTANT)
       const updatedPromptRes = await fetchWithFreshToken(
@@ -437,9 +461,35 @@ const Remix = () => {
         setPrompt(updatedPrompt);
       }
 
+      setProgressMessage("Remix generated successfully.");
+
+      const notificationId = generatedRemixId || `remix-${Date.now()}`;
+      addNotification({
+        id: notificationId,
+        user_id: "system",
+        user_name: "Kirnagram",
+        user_image: null,
+        action: "remix_ready",
+        description: "Your remix is ready. Tap to view it.",
+        timestamp: new Date().toISOString(),
+        read: false,
+        remix_id: generatedRemixId || undefined,
+      });
+
       toast({
         title: "Remix ready",
         description: "Your remix is generated and ready to use.",
+        action: (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (generatedRemixId) navigate(`/remix-details/${generatedRemixId}`);
+            }}
+          >
+            View
+          </Button>
+        ),
       });
     } catch (error: any) {
       if (error?.name === "AbortError") {
@@ -456,70 +506,306 @@ const Remix = () => {
     }
   };
 
-  const handleSubmitReview = async () => {
-    if (!remixId) {
-      toast({
-        title: "Unable to submit review",
-        description: "Please generate a remix first.",
-        variant: "destructive",
-      });
+  const requiredVariables = useMemo(() => {
+    return Array.isArray(prompt?.prompt_variables)
+      ? prompt.prompt_variables.filter((item) => item.required)
+      : [];
+  }, [prompt]);
+
+  const missingRequiredVariables = requiredVariables.filter((item) => {
+    const key = (item?.key || "").trim();
+    return key && !(variableValues[key] || "").trim();
+  });
+
+  const canProceedToStep3 = Boolean(uploadedFile) && missingRequiredVariables.length === 0;
+
+  const handleNextStep = () => {
+    if (wizardStep === 1) {
+      setWizardStep(2);
       return;
     }
-
-    if (!reviewRating) {
-      toast({
-        title: "Select a rating",
-        description: "Please choose whether the remix was good or bad.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (reviewRating === "bad" && !reviewImprovement.trim()) {
-      toast({
-        title: "Add improvement feedback",
-        description: "Please tell us what can be improved.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setReviewSubmitting(true);
-      const formData = new URLSearchParams();
-      formData.append("rating", reviewRating);
-      formData.append("comment", reviewComment.trim());
-      formData.append("improvement", reviewImprovement.trim());
-
-      const res = await fetchWithFreshToken(
-        `${REMIX_API_BASE}/remix/${remixId}/review`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!res.ok) {
-        const message = await res.text();
-        throw new Error(message || "Failed to submit review");
+    if (wizardStep === 2) {
+      if (!uploadedFile) {
+        toast({
+          title: "Upload required",
+          description: "Please upload an image before continuing.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (missingRequiredVariables.length > 0) {
+        toast({
+          title: "Complete all required fields",
+          description: `Please fill: ${missingRequiredVariables.map((item) => item.key).join(", ")}`,
+          variant: "destructive",
+        });
+        return;
       }
 
-      const data = await res.json();
-      setReviewData(data);
-      toast({
-        title: "Review sent",
-        description: "Thanks for your feedback.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Review failed",
-        description: error instanceof Error ? error.message : "Could not submit review.",
-        variant: "destructive",
-      });
-    } finally {
-      setReviewSubmitting(false);
+      // Close inputs and start generation immediately.
+      // This will cause the UI to show the loading view while `generating` is true.
+      handleGenerate();
+      return;
     }
   };
+
+  const handlePrevStep = () => {
+    if (wizardStep > 1) {
+      setWizardStep((current) => (current === 2 ? 1 : 1));
+      return;
+    }
+    handleBack();
+  };
+
+  const handleViewNotification = () => {
+    if (remixId) {
+      navigate(`/remix-details/${remixId}`);
+    }
+  };
+
+  const handleGoToNotifications = () => {
+    navigate("/notifications");
+  };
+
+  const handleBackToPrompt = () => {
+    if (wizardStep === 1) {
+      handleBack();
+      return;
+    }
+    setWizardStep(1);
+  };
+
+  const handleResetWizard = () => {
+    setWizardStep(1);
+  };
+
+  const renderPromptStep = () => (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-border/70 bg-muted/50 p-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prompt</p>
+        <h2 className="mt-2 text-lg font-semibold text-foreground">{promptInfo.style}</h2>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+          {promptInfo.description || "No description provided."}
+        </p>
+      </div>
+
+      {promptInfo.image ? (
+        <div className="rounded-3xl border border-border/70 overflow-hidden">
+          <img src={promptInfo.image} alt="Reference" className="w-full h-64 object-cover rounded-xl" />
+        </div>
+      ) : null}
+
+      <div className="pt-2">
+        <Button onClick={() => setWizardStep(2)} className="w-full h-12">
+          Continue to remix
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderCustomizeStep = () => (
+    <div className="space-y-5">
+      <Card className="glass-card border border-border/60 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Upload your photo</p>
+            <p className="font-semibold text-foreground">Choose one image</p>
+          </div>
+          <ImageIcon className="w-4 h-4 text-muted-foreground" />
+        </div>
+        {uploadedPreview ? (
+          <div className="relative">
+            <img src={uploadedPreview} alt="Uploaded" className="w-full h-64 object-cover rounded-xl" />
+            <button
+              onClick={() => {
+                setUploadedFile(null);
+                setUploadedPreview(null);
+              }}
+              className="absolute top-3 right-3 px-3 py-1 bg-background/90 rounded-full text-xs"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-muted/50 transition-colors">
+            <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+            <span className="text-sm text-muted-foreground">Tap to upload</span>
+            <span className="text-xs text-muted-foreground mt-1">PNG or JPG up to 10MB</span>
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+          </label>
+        )}
+      </Card>
+
+      {Array.isArray(prompt?.prompt_variables) && prompt.prompt_variables.length > 0 ? (
+        <Card className="glass-card border border-border/60 p-4 space-y-4">
+          <p className="text-sm text-muted-foreground">Prompt variables</p>
+          <div className="space-y-3">
+            {prompt.prompt_variables.map((item) => {
+              const key = (item?.key || "").trim();
+              if (!key) return null;
+              const label = item.label || key;
+              const value = variableValues[key] ?? "";
+
+              if (item.input_type === "dropdown") {
+                const options = Array.isArray(item.options) ? item.options : [];
+                return (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      {label}
+                      {item.required ? " *" : ""}
+                    </label>
+                    <Select
+                      value={value}
+                      onValueChange={(nextValue) =>
+                        setVariableValues((prev) => ({ ...prev, [key]: nextValue }))
+                      }
+                    >
+                      <SelectTrigger className="w-full h-11 rounded-xl border-border bg-card/90 text-foreground focus:ring-primary/40 focus:ring-offset-0">
+                        <SelectValue placeholder="Select option" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-border bg-card text-foreground">
+                        {options.length === 0 ? (
+                          <SelectItem value="__no_option__" disabled>
+                            No options
+                          </SelectItem>
+                        ) : (
+                          options.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={key} className="space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    {label}
+                    {item.required ? " *" : ""}
+                  </label>
+                  <input
+                    type="text"
+                    value={value}
+                    placeholder={item.placeholder || `Enter ${label}`}
+                    onChange={(event) =>
+                      setVariableValues((prev) => ({ ...prev, [key]: event.target.value }))
+                    }
+                    className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      ) : null}
+    </div>
+  );
+
+  const renderGenerateStep = () => (
+    <div className="space-y-5">
+      <Card className="glass-card border border-border/60 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Generation summary</p>
+            <p className="font-semibold text-foreground">Confirm and start remixing</p>
+          </div>
+          <span className="text-xs text-muted-foreground">{ratio} aspect</span>
+        </div>
+
+        <div className="grid gap-3 text-sm text-muted-foreground">
+          <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+            <span>Prompt style</span>
+            <strong className="text-foreground">{promptInfo.style}</strong>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+            <span>Model</span>
+            <strong className="text-foreground">{resolvedModel === "chatgpt" ? "ChatGPT" : "Gemini"}</strong>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+            <span>Burn cost</span>
+            <strong className="text-foreground">{burnCost ?? "--"} credits</strong>
+          </div>
+          {uploadedPreview ? (
+            <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-foreground">
+              Uploaded image preview available
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-rose-500/10 p-3 text-sm text-rose-600">
+              No photo uploaded yet.
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</p>
+          <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+            <p className="text-sm text-foreground">{progressMessage}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {generating ? "Generating now..." : "Ready to start when you press generate."}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-3">
+        {generating ? (
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                stopGeneration();
+                toast({
+                  title: "Remix cancelled",
+                  description: "Generation was cancelled.",
+                });
+                setProgressMessage("Generation cancelled.");
+              }}
+              className="w-full"
+            >
+              Cancel Remix
+            </Button>
+            <Button onClick={handleGoToNotifications} className="w-full">
+              Go to Notifications
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleGenerate}
+            disabled={!uploadedFile || generating}
+            className="w-full h-12 bg-gradient-to-r from-secondary to-accent text-secondary-foreground font-semibold"
+          >
+            Generate Remix
+          </Button>
+        )}
+      </div>
+
+    </div>
+  );
+
+  const renderActiveStep = () => {
+    if (wizardStep === 1) return renderPromptStep();
+    return renderCustomizeStep();
+  };
+
+  const stepButtons = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Button variant="outline" onClick={handlePrevStep} className="w-full sm:w-auto">
+        {wizardStep === 1 ? "Back" : "Previous"}
+      </Button>
+      <Button onClick={handleNextStep} className="w-full sm:w-auto">
+        {wizardStep === 1 ? "Continue to remix" : "Generate remix"}
+      </Button>
+    </div>
+  );
+
+  const showOverviewImage = promptInfo.image || uploadedPreview;
+
+  /**
+   * Adds Kirnagram logo + website text at the bottom-left of the provided image URL.
 
   /**
    * Adds Kirnagram logo + website text at the bottom-left of the provided image URL.
@@ -616,393 +902,171 @@ const Remix = () => {
     );
   }
 
+  const stepLabels = [
+    { label: "Prompt", step: 1 },
+    { label: "Upload & generate", step: 2 },
+  ];
+
   return (
     <MainLayout showRightSidebar={true}>
-      <div className="max-w-4xl mx-auto pb-24 md:pb-8 space-y-6">
-        <div className="flex flex-col gap-2 pt-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Remix Studio</p>
-          <div className="w-full flex justify-start">
+      <div className="max-w-5xl mx-auto pb-32 md:pb-8 space-y-6">
+        <div className="flex flex-col gap-3 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Remix Studio</p>
+              <h1 className="text-2xl font-semibold text-foreground">Create your remix</h1>
+            </div>
             <Button variant="ghost" onClick={handleBack}>
               ← Back
             </Button>
           </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {stepLabels.map((stepInfo) => (
+              <button
+                key={stepInfo.step}
+                type="button"
+                onClick={() => setWizardStep(stepInfo.step as 1 | 2)}
+                className={`rounded-3xl border px-4 py-3 text-left transition ${
+                  wizardStep === stepInfo.step
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/70"
+                }`}
+              >
+                <span className="text-[10px] uppercase tracking-[0.24em]">
+                  Step {stepInfo.step}
+                </span>
+                <p className="mt-1 text-sm font-semibold">{stepInfo.label}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-5">
-            <Card className="glass-card border border-border/60 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Original Style</p>
-                  <p className="font-semibold text-foreground">{promptInfo.style}</p>
+          <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
+          <div className="space-y-4">
+            {/* If generating, show focused loading view; otherwise show the active step */}
+            {generating ? (
+              <Card className="glass-card border border-border/60 p-8 flex items-center justify-center flex-col min-h-[320px]">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-20 w-20 border-4 border-t-transparent border-primary" />
+                  <p className="text-lg font-semibold text-foreground">Kirnagram is remixing...</p>
+                  <p className="text-sm text-muted-foreground">{progressMessage}</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs bg-primary/10 text-primary">
-                  {resolvedModel === "chatgpt" ? "ChatGPT" : "Gemini"}
-                </span>
-              </div>
-              {prompt?.unit_id && (
-                <p className="text-xs text-muted-foreground">Prompt ID: {prompt.unit_id}</p>
-              )}
-              {tagsLabel && (
-                <p className="text-xs text-muted-foreground">Tags: {tagsLabel}</p>
-              )}
-              <div className="w-full flex items-center justify-center min-h-[220px] bg-gradient-to-br from-muted/60 to-background rounded-xl border border-border/60 shadow-lg overflow-hidden">
-                {promptInfo.image ? (
-                  <img
-                    src={promptInfo.image}
-                    alt="Prompt sample"
-                    className="max-w-full max-h-72 object-contain rounded-xl transition-transform duration-200 hover:scale-105 shadow-md"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center w-full h-56 text-muted-foreground">
-                    <span className="text-3xl mb-2">🖼️</span>
-                    <span className="text-sm">No sample image</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Show correct reference images if present */}
-              {Array.isArray(prompt?.reference_correct_image_urls) && prompt.reference_correct_image_urls.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-xs font-semibold text-emerald-500 mb-1">Correct Reference Images</div>
-                  <div className="flex flex-wrap gap-2">
-                    {prompt.reference_correct_image_urls.map((url, idx) => (
-                      <img
-                        key={url + idx}
-                        src={url}
-                        alt={`Correct reference ${idx + 1}`}
-                        className="w-20 h-20 object-cover rounded border border-emerald-400 bg-background"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Show wrong reference images if present */}
-              {Array.isArray(prompt?.reference_wrong_image_urls) && prompt.reference_wrong_image_urls.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-xs font-semibold text-red-500 mb-1">Wrong Reference Images</div>
-                  <div className="flex flex-wrap gap-2">
-                    {prompt.reference_wrong_image_urls.map((url, idx) => (
-                      <img
-                        key={url + idx}
-                        src={url}
-                        alt={`Wrong reference ${idx + 1}`}
-                        className="w-20 h-20 object-cover rounded border border-red-400 bg-background"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            <Card className="glass-card border border-border/60 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Your Image</p>
-                  <p className="font-semibold text-foreground">Upload a photo</p>
-                </div>
-                <ImageIcon className="w-4 h-4 text-muted-foreground" />
-              </div>
-              {uploadedPreview ? (
-                <div className="relative">
-                  <img
-                    src={uploadedPreview}
-                    alt="Uploaded"
-                    className="w-full h-64 object-cover rounded-xl"
-                  />
-                  <button
-                    onClick={() => {
-                      setUploadedFile(null);
-                      setUploadedPreview(null);
-                    }}
-                    className="absolute top-3 right-3 px-3 py-1 bg-background/80 rounded-full text-xs"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-muted/50 transition-colors">
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Tap to upload</span>
-                  <span className="text-xs text-muted-foreground mt-1">PNG or JPG up to 10MB</span>
-                  <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
-                </label>
-              )}
-            </Card>
-          </div>
-
-          <div className="space-y-5">
-            <Card className="glass-card border border-border/60 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Generation Settings</p>
-                  <p className="font-semibold text-foreground">Auto model + locked ratio</p>
-                </div>
-                <span className="text-xs text-muted-foreground">Auto model</span>
-              </div>
-              <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Aspect Ratio</p>
-                  <p className="text-sm text-muted-foreground">Auto from approved prompt</p>
-                </div>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold border border-primary/30 bg-primary/10 text-primary">
-                  {ratio}
-                </span>
-              </div>
-
-              {Array.isArray(prompt?.prompt_variables) && prompt.prompt_variables.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prompt Variables</p>
-                  <div className="space-y-2">
-                    {prompt.prompt_variables.map((item) => {
-                      const key = (item?.key || "").trim();
-                      if (!key) return null;
-                      const label = item.label || key;
-                      const value = variableValues[key] ?? "";
-
-                      if (item.input_type === "dropdown") {
-                        const options = Array.isArray(item.options) ? item.options : [];
-                        return (
-                          <div key={key} className="space-y-1">
-                            <label className="text-xs text-muted-foreground">
-                              {label}
-                              {item.required ? " *" : ""}
-                            </label>
-                            <Select
-                              value={value}
-                              onValueChange={(nextValue) =>
-                                setVariableValues((prev) => ({ ...prev, [key]: nextValue }))
-                              }
-                            >
-                              <SelectTrigger className="w-full h-11 rounded-xl border-border bg-card/90 text-foreground focus:ring-primary/40 focus:ring-offset-0">
-                                <SelectValue placeholder="Select option" />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl border-border bg-card text-foreground">
-                                {options.length === 0 ? (
-                                  <SelectItem value="__no_option__" disabled>
-                                    No options
-                                  </SelectItem>
-                                ) : (
-                                  options.map((option) => (
-                                    <SelectItem key={option} value={option}>
-                                      {option}
-                                    </SelectItem>
-                                  ))
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div key={key} className="space-y-1">
-                          <label className="text-xs text-muted-foreground">
-                            {label}
-                            {item.required ? " *" : ""}
-                          </label>
-                          <input
-                            type="text"
-                            value={value}
-                            placeholder={item.placeholder || `Enter ${label}`}
-                            onChange={(event) =>
-                              setVariableValues((prev) => ({ ...prev, [key]: event.target.value }))
-                            }
-                            className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
-                <span className="text-sm text-muted-foreground">Credits burn</span>
-                <span className="text-sm font-semibold text-foreground">
-                  {burnCost ?? "--"} credits
-                </span>
-              </div>
-              <Button
-                onClick={handleGenerate}
-                disabled={!uploadedFile || generating}
-                className="w-full h-11 bg-gradient-to-r from-secondary to-accent text-secondary-foreground font-semibold"
-              >
-                {generating ? "Generating..." : "Generate Remix"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Credits are burned when generation starts. Ratio is locked by prompt settings.
-              </p>
-            </Card>
+              </Card>
+            ) : (
+              <Card className="glass-card border border-border/60 p-4">
+                {renderActiveStep()}
+                <div className="mt-4">{stepButtons}</div>
+              </Card>
+            )}
 
             {outputUrl && (
               <Card className="glass-card border border-border/60 p-5 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm text-muted-foreground">Output</p>
                     <p className="font-semibold text-foreground">Your remix is ready</p>
                   </div>
-                  <Sparkles className="w-4 h-4 text-primary" />
+                  <Sparkles className="w-5 h-5 text-primary" />
                 </div>
                 <img
                   src={outputUrl}
                   alt="Remix output"
-                  className="w-full max-h-[500px] object-contain bg-black rounded-xl border border-border/60"
+                  className="w-full max-h-[520px] object-contain rounded-3xl border border-border/70 bg-muted/50"
                   style={{ aspectRatio: ratio }}
                 />
-                <div className="space-y-4">
-                  {reviewData ? (
-                    <Card className="rounded-xl border border-border/70 bg-muted/30 p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${reviewData.review_rating === "good" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
-                          {reviewData.review_rating === "good" ? "Good" : "Bad"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">Review submitted</span>
-                      </div>
-                      {reviewData.review_comment ? (
-                        <p className="text-sm text-foreground">Feedback: {reviewData.review_comment}</p>
-                      ) : null}
-                      {reviewData.review_improvement ? (
-                        <p className="text-sm text-foreground">Improvement: {reviewData.review_improvement}</p>
-                      ) : null}
-                    </Card>
-                  ) : (
-                    <Card className="rounded-xl border border-border/70 bg-muted/30 p-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">How was this remix?</p>
-                        <p className="text-xs text-muted-foreground">Choose good or bad and add details.</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setReviewRating("good")}
-                          className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${reviewRating === "good" ? "border-emerald-400 bg-emerald-500/10 text-emerald-700" : "border-border bg-background text-foreground hover:border-foreground"}`}
-                        >
-                          Good
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setReviewRating("bad")}
-                          className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${reviewRating === "bad" ? "border-rose-400 bg-rose-500/10 text-rose-700" : "border-border bg-background text-foreground hover:border-foreground"}`}
-                        >
-                          Bad
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">Comment</label>
-                        <textarea
-                          value={reviewComment}
-                          onChange={(event) => setReviewComment(event.target.value)}
-                          placeholder="What did you like or dislike?"
-                          className="w-full min-h-[100px] rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm"
-                        />
-                      </div>
-                      {reviewRating === "bad" && (
-                        <div className="space-y-2">
-                          <label className="text-xs text-muted-foreground">What can be improved?</label>
-                          <textarea
-                            value={reviewImprovement}
-                            onChange={(event) => setReviewImprovement(event.target.value)}
-                            placeholder="Tell us what should be better"
-                            className="w-full min-h-[100px] rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm"
-                          />
-                        </div>
-                      )}
-                      <Button
-                        onClick={handleSubmitReview}
-                        disabled={reviewSubmitting}
-                        className="w-full"
-                      >
-                        {reviewSubmitting ? "Sending review..." : "Send review"}
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        Your review helps improve future generations and creator quality.
-                      </p>
-                    </Card>
-                  )}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Button onClick={handleViewNotification} className="w-full">
+                    View remix
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate("/create", { state: { imageUrl: outputUrl } })}
+                    className="w-full"
+                  >
+                    Add to post
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/story/upload", { state: { imageUrl: outputUrl } })}
+                    className="w-full"
+                  >
+                    Add to story
+                  </Button>
                 </div>
-                <div className="grid gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center"
-                  disabled={downloading}
-                  onClick={async () => {
-                    setDownloading(true);
-                    try {
-                      if (!remixId) {
-                        alert("Invalid remix ID");
-                        setDownloading(false);
-                        return;
-                      }
-
-                      const user = auth.currentUser;
-                      if (!user) {
-                        alert("Please login");
-                        setDownloading(false);
-                        return;
-                      }
-
-                      const token = await user.getIdToken();
-
-                      const response = await fetch(
-                        `${import.meta.env.VITE_API_BASE}/remix/download/${remixId}`,
-                        {
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }
-                      );
-
-                      if (!response.ok) {
-                        throw new Error("Download failed");
-                      }
-
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.download = `kirnagram-remix-${remixId}.png`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-
-                      window.URL.revokeObjectURL(url);
-
-                    } catch (error) {
-                      alert("Failed to download image.");
-                    } finally {
-                      setDownloading(false);
-                    }
-                  }}
-                >
-                  {downloading ? (
-                    <span className="animate-spin h-5 w-5 border-2 border-t-transparent border-primary rounded-full mr-2"></span>
-                  ) : (
-                    <Download className="w-4 h-4 mr-2" />
-                  )}
-                  {downloading ? "Downloading..." : "Download"}
-                </Button>
-                <Button
-                  onClick={() => navigate("/create", { state: { imageUrl: outputUrl } })}
-                  className="w-full"
-                >
-                  Add to Post
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate("/story/upload", { state: { imageUrl: outputUrl } })}
-                  className="w-full"
-                >
-                  Add to Story
-                </Button>
-                </div>
-                </Card>
+              </Card>
             )}
           </div>
+
+          {/* Show the right summary/preview only when a remix output exists */}
+          {outputUrl && (
+            <aside className="space-y-4">
+            <Card className="glass-card border border-border/60 p-4 space-y-4">
+              <div className="space-y-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prompt summary</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Style</p>
+                  <p className="font-semibold text-foreground">{promptInfo.style}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Description</p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                    {promptInfo.description || "No description available."}
+                  </p>
+                </div>
+                {tagsLabel ? (
+                  <div className="flex flex-wrap gap-2">
+                    {prompt.tags?.map((tag) => (
+                      <span key={tag} className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </Card>
+
+            <Card className="glass-card border border-border/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">Preview</p>
+                <span className="text-xs text-muted-foreground">{ratio}</span>
+              </div>
+              <div className="mt-4 rounded-3xl border border-border/70 bg-muted/50 overflow-hidden">
+                <img
+                  src={uploadedPreview || promptInfo.image || "https://via.placeholder.com/320x480?text=No+preview"}
+                  alt="Prompt preview"
+                  className="h-64 w-full object-cover"
+                />
+              </div>
+            </Card>
+
+            <Card className="glass-card border border-border/60 p-4 space-y-3">
+              <p className="text-sm text-muted-foreground">Generation status</p>
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-sm text-foreground">
+                <p>{generating ? "Generating now..." : "Ready to start when you press generate."}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{progressMessage}</p>
+              </div>
+            </Card>
+            </aside>
+          )}
         </div>
       </div>
+      {prompt && (
+        <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur-sm px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleNextStep}
+              disabled={wizardStep === 2 ? !uploadedFile || generating : false}
+              className="flex-1 h-12 bg-gradient-to-r from-secondary to-accent text-secondary-foreground font-semibold"
+            >
+              {wizardStep === 1 ? "Continue to remix" : generating ? "Generating..." : "Generate remix"}
+            </Button>
+            <span className="text-xs text-muted-foreground min-w-[72px] text-right">
+              {burnCost ?? "--"} cr
+            </span>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

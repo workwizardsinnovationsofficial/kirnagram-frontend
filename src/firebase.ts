@@ -122,6 +122,15 @@ hydrateAuthFromStorage();
 
 const API_BASE = "https://api.kirnagram.com";
 
+const decodeJwtPayload = (token: string) => {
+  const segments = token.split(".");
+  const payload = segments[1] || "";
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const decoded = atob(padded);
+  return JSON.parse(decodeURIComponent(decoded.split("").map((char) => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`).join("")));
+};
+
 const loadGoogleScript = () => {
   return new Promise<void>((resolve, reject) => {
     if (typeof window === "undefined") {
@@ -204,7 +213,7 @@ export const createUserWithEmailAndPassword = async (email: string, password: st
   return { user: authUser, data };
 };
 
-export const signInWithGoogle = async () => {
+export const getGoogleAuthProfile = async () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
   if (!clientId) {
     throw new Error("Google OAuth is not configured. Set VITE_GOOGLE_CLIENT_ID.");
@@ -218,35 +227,82 @@ export const signInWithGoogle = async () => {
       return;
     }
 
+    let resolved = false;
     window.google.accounts.id.initialize({
       client_id: clientId,
-      callback: (googleResponse: { credential?: string }) => resolve(googleResponse),
+      callback: (googleResponse: { credential?: string }) => {
+        resolved = true;
+        if (googleResponse.credential) {
+          resolve(googleResponse);
+        } else {
+          reject(new Error("Google sign-in did not return a credential"));
+        }
+      },
       auto_select: false,
-      cancel_on_tap_outside: true,
+      cancel_on_tap_outside: false,
     });
 
-    window.google.accounts.id.prompt((notification: Record<string, unknown>) => {
-      if ((notification as { isNotDisplayed?: () => boolean }).isNotDisplayed?.()) {
-        reject(new Error("Google sign-in popup was not displayed"));
-      }
-      if ((notification as { isSkippedMoment?: () => boolean }).isSkippedMoment?.()) {
-        reject(new Error("Google sign-in was skipped"));
-      }
+    // Use renderButton with implicit flow instead of prompt
+    const buttonDiv = document.createElement("div");
+    buttonDiv.id = "google-signin-button-temp";
+    buttonDiv.style.display = "none";
+    document.body.appendChild(buttonDiv);
+
+    window.google.accounts.id.renderButton(buttonDiv, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text: "signin",
     });
+
+    // Simulate button click
+    const button = buttonDiv.querySelector("div[role='button']") as HTMLElement;
+    if (button) {
+      button.click();
+    }
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      document.body.removeChild(buttonDiv);
+      if (!resolved) {
+        reject(new Error("Google sign-in timeout"));
+      }
+    }, 30000);
   });
 
   if (!response.credential) {
     throw new Error("Google sign-in did not return a credential");
   }
 
-  const payload = JSON.parse(atob(response.credential.split(".")[1] || "{}"));
+  const payload = decodeJwtPayload(response.credential);
+
+  return {
+    idToken: response.credential,
+    profile: {
+      name: payload.name || payload.given_name || "",
+      email: payload.email || "",
+      picture: payload.picture || "",
+      dob: payload.birthdate || null,
+      gender: payload.gender || null,
+      given_name: payload.given_name || "",
+      family_name: payload.family_name || "",
+    },
+  };
+};
+
+export const signInWithGoogle = async () => {
+  const { idToken, profile } = await getGoogleAuthProfile();
+
   const backendResponse = await fetch(`${API_BASE}/auth/google-login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      id_token: response.credential,
-      full_name: payload.name || payload.given_name || "",
-      email: payload.email || "",
+      id_token: idToken,
+      full_name: profile.name,
+      email: profile.email,
+      image_name: profile.picture,
+      dob: profile.dob,
+      gender: profile.gender,
     }),
   });
 
@@ -259,7 +315,8 @@ export const signInWithGoogle = async () => {
     user_id: data.user_id,
     public_id: data.public_id,
     full_name: data.full_name,
-    email: payload.email || "",
+    email: profile.email || "",
+    photoURL: profile.picture || null,
   });
 
   return { user: authUser, data };

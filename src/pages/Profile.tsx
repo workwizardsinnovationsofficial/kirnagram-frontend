@@ -43,6 +43,7 @@ const emptyMessages: Record<string, string> = {
 
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || API_BASE;
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const Profile = () => {
       if (!user) return;
       const token = await user.getIdToken();
 
-      const res = await fetch(`${API_BASE}/remix/my-remixes`, {
+      const res = await fetch(`${REMIX_API_BASE}/remix/my-remixes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

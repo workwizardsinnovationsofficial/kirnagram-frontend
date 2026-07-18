@@ -31,6 +31,15 @@ type Prompt = {
 };
 
 const normalizePrompt = (raw: any): Prompt => {
+  const sanitizePublicDescription = (text?: string) => {
+    if (!text) return "";
+    return String(text)
+      .replace(/{{?\s*[^{}]+\s*}?}/g, "")
+      .replace(/\[[^\]]+\]/g, "")
+      .replace(/\([^)]*\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
   const sampleImageUrls = Array.isArray(raw?.sample_image_urls)
     ? raw.sample_image_urls
     : Array.isArray(raw?.sample_images)
@@ -57,7 +66,7 @@ const normalizePrompt = (raw: any): Prompt => {
     post_id: raw?.post_id ?? null,
     unit_id: raw?.unit_id ?? null,
     style_name: raw?.style_name || "Untitled",
-    prompt_description: raw?.prompt_description || "",
+    prompt_description: sanitizePublicDescription(raw?.prompt_description || raw?.description || ""),
     ai_model: raw?.ai_model || "",
     prompt_category: raw?.prompt_category || "",
     tags: Array.isArray(raw?.tags) ? raw.tags : [],

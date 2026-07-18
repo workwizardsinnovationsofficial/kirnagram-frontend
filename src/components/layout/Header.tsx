@@ -45,6 +45,13 @@ export function Header() {
             action: n.action || n.type || "notification",
             description: n.description || n.message || "",
             timestamp: n.timestamp,
+            remix_id: n.remix_id,
+            post_id: n.post_id,
+            post_owner_id: n.post_owner_id,
+            from_user_username: n.from_user_username,
+            from_user_gender: n.from_user_gender,
+            type: n.type,
+            status: n.status,
             // Preserve read status if notification already exists
             read: existing ? existing.read : false,
           };

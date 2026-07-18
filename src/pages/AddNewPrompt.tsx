@@ -71,6 +71,21 @@ const extractTemplateKeys = (template: string): string[] => {
   return Array.from(keys);
 };
 
+const generateSafeDescription = (template: string) => {
+  if (!template) return "";
+  // Remove template tokens like {var} and {{var}}, bracketed hints like [uploaded photo],
+  // and parenthetical instructions. Collapse whitespace and trim.
+  let s = template
+    .replace(/\{\{?[^{}]+\}??\}/g, "")
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!s) return "";
+  if (s.length > 300) s = `${s.slice(0, 297)}...`;
+  return s;
+};
+
 const prettifyLabel = (key: string) =>
   key
     .split("_")
@@ -106,6 +121,7 @@ const AddNewPrompt = () => {
 
   const [styleName, setStyleName] = useState("");
   const [promptTemplate, setPromptTemplate] = useState("");
+  const [promptDescription, setPromptDescription] = useState("");
   const [variables, setVariables] = useState<VariableDraft[]>([]);
 
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
@@ -288,7 +304,8 @@ const AddNewPrompt = () => {
       setSubmitting(true);
       const formData = new FormData();
       formData.append("style_name", styleName.trim());
-      formData.append("prompt_description", promptTemplate.trim());
+      const finalPromptDescription = promptDescription.trim() || generateSafeDescription(promptTemplate.trim()) || promptTemplate.trim();
+      formData.append("prompt_description", finalPromptDescription);
       formData.append("prompt_template", promptTemplate.trim());
       formData.append("prompt_variables_json", JSON.stringify(normalizedVariables));
       formData.append("prompt_category", finalCategory);
@@ -405,6 +422,18 @@ const AddNewPrompt = () => {
                   onChange={(event) => setPromptTemplate(event.target.value)}
                   placeholder="A cinematic portrait of {gender} in {city}..."
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prompt Description (public)</label>
+                <textarea
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={promptDescription}
+                  onChange={(event) => setPromptDescription(event.target.value)}
+                  placeholder="Short, user-facing description shown to users (avoid internal instructions)."
+                />
+                <p className="text-xs text-muted-foreground">If left empty, a safe description will be auto-generated from the template.</p>
               </div>
 
               <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-3">

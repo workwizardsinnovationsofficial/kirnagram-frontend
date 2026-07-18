@@ -6,6 +6,8 @@ import avatar2 from "@/assets/avatar-2.jpg";
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+
 const EditCreatorProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,7 +45,7 @@ const EditCreatorProfile = () => {
       }
       try {
         const token = await user.getIdToken();
-        const res = await fetch("https://api.kirnagram.com/profile/me", {
+        const res = await fetch(`${API_BASE}/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
@@ -80,7 +82,7 @@ const EditCreatorProfile = () => {
       const user = auth.currentUser;
       if (!user) throw new Error("Not authenticated");
       const token = await user.getIdToken();
-      const res = await fetch("https://api.kirnagram.com/ai-creator/profile", {
+      const res = await fetch(`${API_BASE}/ai-creator/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -100,6 +102,11 @@ const EditCreatorProfile = () => {
 
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error(
+            "No AI Creator application found. Please start your creator application from the AI Creator page first."
+          );
+        }
         throw new Error(payload?.detail?.message || payload?.detail || "Failed to save creator profile");
       }
 
@@ -107,6 +114,7 @@ const EditCreatorProfile = () => {
         title: "Profile updated",
         description: "Creator profile details saved successfully.",
       });
+      navigate("/ai-creator");
     } catch (e) {
       toast({
         title: "Save failed",

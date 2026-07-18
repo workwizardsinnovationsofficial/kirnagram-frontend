@@ -50,6 +50,8 @@ import Remix from "./pages/Remix";
 import RemixViewer from "./pages/RemixViewer";
 import RemixDetails from "./pages/RemixDetails";
 import ChangePassword from "./pages/ChangePassword";
+import PasswordSetup from "./pages/PasswordSetup";
+import VerifyMobileGoogle from "./pages/VerifyMobileGoogle";
 import { VideoSoundProvider } from "@/context/VideoSoundContext";
 import ActivityTracker from "@/components/ActivityTracker";
 import "./glass.css";
@@ -129,6 +131,8 @@ const App = () => {
                   <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                   <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/auth/setup-password" element={<PrivateRoute><PasswordSetup /></PrivateRoute>} />
+                  <Route path="/auth/verify-mobile-google" element={<VerifyMobileGoogle />} />
 
                   <Route path="/home" element={<PrivateRoute><Index /></PrivateRoute>} />
                   <Route path="/explore" element={<PrivateRoute><Explore /></PrivateRoute>} />

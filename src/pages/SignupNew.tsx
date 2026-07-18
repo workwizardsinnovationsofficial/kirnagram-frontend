@@ -4,9 +4,18 @@ import { Eye, EyeOff, ArrowRight, Loader, CheckCircle, ArrowLeft } from "lucide-
 import kirnagramLogoText from "@/assets/kirnagram@2.png";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
-import { setAuthSession } from "@/firebase";
+import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
 const API_BASE = "https://api.kirnagram.com";
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+    <path fill="#4285F4" d="M21.6 12.23c0-.78-.07-1.53-.2-2.25H12v4.26h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.33 2.98-7.53Z" />
+    <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.43l-3.24-2.5c-.9.6-2.05.96-3.37.96-2.59 0-4.79-1.75-5.57-4.1H3.05v2.58A10 10 0 0 0 12 22Z" />
+    <path fill="#FBBC05" d="M6.43 13.93A6.02 6.02 0 0 1 6.43 10.07V7.49H3.05a10 10 0 0 0 0 12.88l3.38-2.44Z" />
+    <path fill="#EA4335" d="M12 6.04c1.46 0 2.78.5 3.82 1.49l2.86-2.86A9.96 9.96 0 0 0 12 2a9.99 9.99 0 0 0-8.95 5.49l3.38 2.44C7.21 7.79 9.41 6.04 12 6.04Z" />
+  </svg>
+);
 
 type SignupStep =
   | "name_input"
@@ -37,6 +46,8 @@ const SignupNew = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
   const [emailOtp, setEmailOtp] = useState("");
+  const [googleProfile, setGoogleProfile] = useState<{ idToken?: string; name?: string; email?: string; picture?: string; dob?: string | null; gender?: string | null } | null>(null);
+  const [googleFlow, setGoogleFlow] = useState(false);
 
   // ============ Verification States ============
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
@@ -78,6 +89,40 @@ const SignupNew = () => {
       return;
     }
     setStep("mobile_input");
+  };
+
+  const handleContinueWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await getGoogleAuthProfile();
+      const nextName = result.profile.name || fullName || "";
+      const profile = {
+        idToken: result.idToken,
+        ...result.profile,
+      };
+      setFullName(nextName);
+      setEmail(profile.email || "");
+      setGoogleProfile(profile);
+      setGoogleFlow(true);
+      setEmailAdded(Boolean(profile.email));
+      setEmailVerified(Boolean(profile.email));
+      setMobile("");
+      setMobileOtp("");
+      setMobileOtpSent(false);
+      setStep("mobile_input");
+      toast({
+        title: "Google profile loaded",
+        description: "Google email verified. Please verify your mobile number to continue.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Google signup failed",
+        description: err.message || "Unable to continue with Google",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ============ Step 2: Mobile Input ============
@@ -159,8 +204,42 @@ const SignupNew = () => {
       setMobileVerified(true);
       toast({
         title: "Mobile verified",
-        description: "Moving to next step",
+        description: googleFlow ? "Finishing your account setup" : "Moving to next step",
       });
+
+      if (googleFlow) {
+        const response = await fetch(`${API_BASE}/auth/google-login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_token: googleProfile?.idToken,
+            full_name: fullName,
+            email: googleProfile?.email,
+            image_name: googleProfile?.picture,
+            dob: googleProfile?.dob,
+            gender: googleProfile?.gender,
+            mobile: normalizedMobile,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || data.message || "Google signup failed");
+        }
+
+        setAuthSession(data.access_token, data.refresh_token, {
+          user_id: data.user_id,
+          public_id: data.public_id || "",
+          full_name: data.full_name || fullName,
+          email: googleProfile?.email || undefined,
+          photoURL: googleProfile?.picture || null,
+        });
+
+        navigate("/home");
+        return;
+      }
+
       setStep("email_option");
     } catch (err: any) {
       toast({
@@ -288,9 +367,9 @@ const SignupNew = () => {
       setEmailVerified(true);
       toast({
         title: "Email verified",
-        description: "Moving to next step",
+        description: googleFlow ? "Now verify your mobile number" : "Moving to next step",
       });
-      setStep("password_input");
+      setStep(googleFlow ? "mobile_input" : "password_input");
     } catch (err: any) {
       toast({
         title: "OTP verification failed",
@@ -307,10 +386,19 @@ const SignupNew = () => {
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName || !password) {
+    if (!fullName) {
       toast({
         title: "Missing required fields",
-        description: "Name and password are required",
+        description: "Name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!googleFlow && !password) {
+      toast({
+        title: "Missing required fields",
+        description: "Password is required",
         variant: "destructive",
       });
       return;
@@ -341,17 +429,44 @@ const SignupNew = () => {
       const payload: any = {
         full_name: fullName,
         mobile: normalizedMobile,
-        password: password,
       };
+
+      if (!googleFlow) {
+        payload.password = password;
+      }
 
       if (emailAdded && emailVerified) {
         payload.email = email.toLowerCase().trim();
       }
 
-      const response = await fetch(`${API_BASE}/auth/signup`, {
+      if (googleFlow && googleProfile?.email) {
+        payload.email = googleProfile.email;
+        payload.google_profile = {
+          name: googleProfile.name,
+          email: googleProfile.email,
+          picture: googleProfile.picture,
+          dob: googleProfile.dob,
+          gender: googleProfile.gender,
+        };
+      }
+
+      const endpoint = googleFlow ? `${API_BASE}/auth/google-login` : `${API_BASE}/auth/signup`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(
+          googleFlow
+            ? {
+                id_token: googleProfile?.idToken,
+                full_name: fullName,
+                email: googleProfile?.email,
+                image_name: googleProfile?.picture,
+                dob: googleProfile?.dob,
+                gender: googleProfile?.gender,
+                mobile: normalizedMobile,
+              }
+            : payload
+        ),
       });
 
       const data = await response.json();
@@ -365,12 +480,12 @@ const SignupNew = () => {
         user_id: data.user_id,
         public_id: data.public_id || "",
         full_name: fullName,
-        email: emailAdded && emailVerified ? email.toLowerCase().trim() : undefined,
+        email: (emailAdded && emailVerified) || googleFlow ? (googleFlow ? googleProfile?.email : email.toLowerCase().trim()) : undefined,
       });
 
       toast({
-        title: "Account created! 🎉",
-        description: "Welcome to Kirnagram",
+        title: "Account created",
+        description: "Welcome to Kirnagram.",
       });
 
       // Redirect to home after brief delay
@@ -538,8 +653,18 @@ const SignupNew = () => {
                   className="w-full px-5 py-4 bg-orange-50/30 dark:bg-white dark:bg-zinc-950/70 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/40 focus:outline-none transition text-lg font-medium"
                   autoFocus
                 />
-                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">💡 We'll use this to personalize your profile</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">We will use this to personalize your profile.</p>
               </div>
+
+              <button
+                type="button"
+                onClick={handleContinueWithGoogle}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 border border-zinc-300 bg-white/90 hover:bg-zinc-50 text-gray-900 font-semibold py-3 rounded-xl transition duration-200 shadow-sm"
+              >
+                <GoogleIcon />
+                {loading ? "Loading..." : "Continue with Google"}
+              </button>
 
               <button
                 type="submit"
@@ -574,7 +699,7 @@ const SignupNew = () => {
                   className="w-full px-5 py-4 bg-orange-50/30 dark:bg-white dark:bg-zinc-950/70 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/40 focus:outline-none transition text-lg font-medium"
                   autoFocus
                 />
-                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">📱 We'll send an OTP to verify it</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">We will send a verification code to confirm your number.</p>
               </div>
 
               <button
@@ -649,7 +774,7 @@ const SignupNew = () => {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-gray-900 dark:text-white font-bold text-sm">3</div>
                   <span className="text-sm font-bold text-orange-300 uppercase tracking-widest">Email (Optional)</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">📧 Add an email to secure your account and receive important updates</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Add an email to secure your account and receive important updates.</p>
                 <p className="text-xs text-gray-600 dark:text-gray-500 mt-2">You can always update it later in your profile settings</p>
               </div>
 
@@ -699,7 +824,7 @@ const SignupNew = () => {
                   className="w-full px-5 py-4 bg-orange-50/30 dark:bg-white dark:bg-zinc-950/70 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/40 focus:outline-none transition disabled:opacity-50 text-lg font-medium"
                   autoFocus
                 />
-                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">📧 We'll send an OTP to verify it</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">We will send a verification code to confirm it.</p>
               </div>
 
               <button
@@ -780,7 +905,7 @@ const SignupNew = () => {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-gray-900 dark:text-white font-bold text-sm">4</div>
                   <label className="text-sm font-bold text-orange-300 uppercase tracking-widest">Set Password</label>
                 </div>
-                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs font-medium">🔐 At least 8 characters, uppercase, lowercase, and number</p>
+                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs font-medium">Use at least 8 characters with uppercase, lowercase, and a number.</p>
                 
                 <div className="relative">
                   <input
@@ -910,7 +1035,7 @@ const SignupNew = () => {
                   <CheckCircle className="w-10 h-10 text-gray-900 dark:text-white" />
                 </div>
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent mb-2">Ready to Go!</h2>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm">✨ Click below to activate your Kirnagram account</p>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm">Click below to activate your Kirnagram account.</p>
               </div>
 
               <button

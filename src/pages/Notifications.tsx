@@ -49,6 +49,9 @@ const Notifications = () => {
             description: n.description || n.message || "",
             timestamp: n.timestamp,
             read: true,
+            remix_id: n.remix_id,
+            post_id: n.post_id,
+            post_owner_id: n.post_owner_id,
           }))
         );
         markAllAsRead();
@@ -248,6 +251,11 @@ const Notifications = () => {
         initialPostId: notif.post_id,
       },
     });
+  };
+
+  const openRemixDetails = (notif: any) => {
+    if (!notif?.remix_id) return;
+    navigate(`/remix-details/${notif.remix_id}`);
   };
 
   if (!mounted) return null;
@@ -464,6 +472,14 @@ const Notifications = () => {
                               className="mt-1 text-xs text-primary hover:underline"
                             >
                               View earnings
+                            </button>
+                          )}
+                          {notif.remix_id && (
+                            <button
+                              onClick={() => openRemixDetails(notif)}
+                              className="mt-1 text-xs text-primary hover:underline"
+                            >
+                              View remix
                             </button>
                           )}
                         </div>

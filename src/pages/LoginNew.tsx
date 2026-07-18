@@ -4,11 +4,20 @@ import { Eye, EyeOff, Mail, Smartphone, ArrowRight, Loader, CheckCircle, Lock } 
 import kirnagramLogoText from "@/assets/kirnagram@2.png";
 import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
-import { setAuthSession } from "@/firebase";
+import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
 const API_BASE = "https://api.kirnagram.com";
 
 type LoginStep = "email_mobile_input" | "password_entry" | "forgot_password_email_mobile" | "forgot_password_otp" | "reset_password_entry";
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+    <path fill="#4285F4" d="M21.6 12.23c0-.78-.07-1.53-.2-2.25H12v4.26h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.33 2.98-7.53Z" />
+    <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.43l-3.24-2.5c-.9.6-2.05.96-3.37.96-2.59 0-4.79-1.75-5.57-4.1H3.05v2.58A10 10 0 0 0 12 22Z" />
+    <path fill="#FBBC05" d="M6.43 13.93A6.02 6.02 0 0 1 6.43 10.07V7.49H3.05a10 10 0 0 0 0 12.88l3.38-2.44Z" />
+    <path fill="#EA4335" d="M12 6.04c1.46 0 2.78.5 3.82 1.49l2.86-2.86A9.96 9.96 0 0 0 12 2a9.99 9.99 0 0 0-8.95 5.49l3.38 2.44C7.21 7.79 9.41 6.04 12 6.04Z" />
+  </svg>
+);
 
 const Login = () => {
   const navigate = useNavigate();
@@ -165,8 +174,8 @@ const Login = () => {
       });
 
       toast({
-        title: "Login successful! 🎉",
-        description: "Welcome back!",
+        title: "Login successful",
+        description: "Welcome back.",
       });
 
       // Redirect to home after brief delay
@@ -268,8 +277,8 @@ const Login = () => {
       });
 
       toast({
-        title: "Login successful! 🎉",
-        description: "Welcome back!",
+        title: "Login successful",
+        description: "Welcome back.",
       });
 
       setTimeout(() => {
@@ -353,8 +362,8 @@ const Login = () => {
       }
 
       toast({
-        title: "Password reset successful! 🎉",
-        description: "You can now login with your new password",
+        title: "Password reset successful",
+        description: "You can now sign in with your new password.",
       });
 
       // Reset to login method selection
@@ -377,6 +386,84 @@ const Login = () => {
   };
 
   // ============ Back Button Handler ============
+
+  const handleContinueWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const { idToken, profile } = await getGoogleAuthProfile();
+      
+      const response = await fetch(`${API_BASE}/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_token: idToken,
+          full_name: profile.name,
+          email: profile.email,
+          image_name: profile.picture,
+          dob: profile.dob,
+          gender: profile.gender,
+          mobile: profile.mobile,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      
+      // Check if mobile verification is needed
+      if (data.needs_mobile_verification) {
+        toast({
+          title: "Mobile Verification Required",
+          description: "Please verify your mobile number to continue",
+        });
+        // Store Google profile data in session for later
+        sessionStorage.setItem("googleAuthPending", JSON.stringify({
+          idToken,
+          profile,
+        }));
+        // Redirect to mobile verification - we'll create a dedicated page for this
+        navigate("/auth/verify-mobile-google", { state: { email: profile.email } });
+        setLoading(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || "Google login failed");
+      }
+
+      setAuthSession(data.access_token, data.refresh_token, {
+        user_id: data.user_id,
+        public_id: data.public_id || "",
+        full_name: data.full_name || profile.name || "",
+        email: profile.email || undefined,
+        photoURL: profile.picture || null,
+      });
+
+      // Check if password setup is needed
+      if (data.needs_password_setup) {
+        toast({
+          title: "Setup Required",
+          description: "Please set up a password for your account",
+        });
+        // Redirect to password setup page
+        navigate("/auth/setup-password");
+      } else {
+        toast({
+          title: "Login successful",
+          description: "Welcome back.",
+        });
+        setTimeout(() => {
+          navigate("/home");
+        }, 500);
+      }
+    } catch (err: any) {
+      toast({
+        title: "Google login failed",
+        description: err.message || "Unable to continue with Google",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBack = () => {
     if (step === "password_entry") {
@@ -441,6 +528,16 @@ const Login = () => {
                   onKeyPress={(e) => e.key === "Enter" && handleNextFromEmailMobile()}
                 />
               </div>
+
+              <button
+                type="button"
+                onClick={handleContinueWithGoogle}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 border border-zinc-300 bg-white/90 hover:bg-zinc-50 text-gray-900 font-semibold py-3 rounded-lg transition duration-200 shadow-sm"
+              >
+                <GoogleIcon />
+                {loading ? "Loading..." : "Continue with Google"}
+              </button>
 
               <button
                 onClick={handleNextFromEmailMobile}

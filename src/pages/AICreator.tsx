@@ -26,7 +26,7 @@ const creatorLandingBenefits = [
   { icon: Heart, title: "Priority Support", description: "Faster help for active AI creators." },
 ];
 
-const API_URL = "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
 const AICreator = () => {
@@ -105,7 +105,7 @@ const AICreator = () => {
         }
         // Fetch profile from backend (for mobile)
         const token = await user.getIdToken();
-        const res = await fetch(`${API_URL}/profile/me`, {
+        const res = await fetch(`${API_BASE}/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
@@ -120,7 +120,9 @@ const AICreator = () => {
           facebook: data.facebook || "",
         }));
         // Fetch AI Creator application status
-        const appRes = await fetch(`${API_URL}/ai-creator/application/${data.firebase_uid}`);
+        const appRes = await fetch(`${API_BASE}/ai-creator/application/${data.firebase_uid}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (appRes.ok) {
           const appData = await appRes.json();
           setApplication(appData);
@@ -161,7 +163,7 @@ const AICreator = () => {
         const user = auth.currentUser;
         if (!user) return;
         const token = await user.getIdToken();
-        const res = await fetch(`${API_URL}/ai-creator/prompts/me?status=all`, {
+        const res = await fetch(`${API_BASE}/ai-creator/prompts/me?status=all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return setPrompts([]);
@@ -192,7 +194,7 @@ const AICreator = () => {
         if (!user) return;
         const token = await user.getIdToken();
         // Fetch remixes for count
-        const remixesRes = await fetch(`${API_URL}/remix/my-remixes`, {
+        const remixesRes = await fetch(`${API_BASE}/remix/my-remixes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (remixesRes.ok) {
@@ -200,7 +202,7 @@ const AICreator = () => {
           setRemixes(remixesData.remixes || []);
         }
         // Fetch earnings summary with accurate totalEarnings and totalRemixes
-        const res = await fetch(`${API_URL}/withdraw/summary`, {
+        const res = await fetch(`${API_BASE}/withdraw/summary`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -259,9 +261,12 @@ const AICreator = () => {
           facebook: form.facebook,
           website: form.website,
         };
-        const res = await fetch(`${API_URL}/ai-creator/apply`, {
+        const res = await fetch(`${API_BASE}/ai-creator/apply`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await user.getIdToken()}`,
+          },
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Failed to submit application");

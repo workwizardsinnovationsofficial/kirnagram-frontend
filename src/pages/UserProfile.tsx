@@ -31,15 +31,18 @@ import { auth } from "@/firebase";
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || API_BASE;
 
 const tabs = [
   { id: "posts", label: "Posts", icon: Grid },
   { id: "prompts", label: "Prompts", icon: Award },
+  { id: "remixes", label: "Remixes", icon: Heart },
 ];
 
 const emptyMessages: Record<string, string> = {
   posts: "No posts yet",
   prompts: "No prompts yet",
+  remixes: "No remixes yet",
 };
 
 const UserProfile = () => {
@@ -56,6 +59,7 @@ const UserProfile = () => {
   const [firstStoryId, setFirstStoryId] = useState<string | null>(null);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [userPromptPosts, setUserPromptPosts] = useState<any[]>([]);
+  const [userRemixes, setUserRemixes] = useState<any[]>([]);
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [aboutInfo, setAboutInfo] = useState<any>(null);
@@ -133,6 +137,19 @@ const UserProfile = () => {
           } else {
             setUserPosts([]);
             setUserPromptPosts([]);
+          }
+
+          const remixesRes = await fetch(`${REMIX_API_BASE}/remix/user/${resolveTargetId(data, userId)}/remixes`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (remixesRes.ok) {
+            const remixesData = await remixesRes.json();
+            setUserRemixes(remixesData.remixes || []);
+          } else {
+            setUserRemixes([]);
           }
 
         } catch (error) {
@@ -707,6 +724,7 @@ const UserProfile = () => {
                   .filter((tab) => {
                     if (tab.id === "posts") return canViewFullProfile;
                     if (tab.id === "prompts") return canViewPromptPosts;
+                    if (tab.id === "remixes") return canViewFullProfile || profile.firebase_uid === currentUser?.uid;
                     return true;
                   })
                   .map((tab) => (
@@ -801,6 +819,43 @@ const UserProfile = () => {
                           <MessageCircle className="w-4 h-4" />
                           {post.comments?.length ?? 0}
                         </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-10 flex flex-col items-center gap-2 text-muted-foreground">
+                  <p className="text-sm sm:text-base font-medium">
+                    {emptyMessages[activeTab]}
+                  </p>
+                  <p className="text-xs sm:text-sm">Check back later.</p>
+                </div>
+              )
+            ) : activeTab === "remixes" ? (
+              userRemixes.length > 0 ? (
+                <div className="grid grid-cols-3 gap-1 sm:gap-2 p-1 sm:p-2">
+                  {userRemixes.map((remix: any, index: number) => (
+                    <button
+                      key={remix.id}
+                      type="button"
+                      className="group relative aspect-square overflow-hidden bg-muted"
+                      onClick={() => {
+                        navigate("/remix-view", {
+                          state: {
+                            remixes: userRemixes,
+                            startIndex: index,
+                            fromProfile: true,
+                          },
+                        });
+                      }}
+                    >
+                      <img
+                        src={remix.image_url}
+                        alt={`Remix ${index + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-1 text-[11px] text-white">
+                        {new Date(remix.created_at).toLocaleDateString()}
                       </div>
                     </button>
                   ))}

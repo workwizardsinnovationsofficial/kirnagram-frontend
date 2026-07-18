@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Heart, Eye, MessageCircle, X, Trash2, Plus, 
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { auth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { getRelativeTimeLabel } from '@/lib/storyTime';
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
@@ -615,45 +616,8 @@ const StoryView: React.FC = () => {
     }
   };
 
-  // Calculate relative time (e.g., "2h ago", "5m ago")
-  const getRelativeTime = (dateString: string): string => {
-    try {
-      const now = new Date();
-      
-      // Handle ISO 8601 format and other formats
-      let past = new Date(dateString);
-      
-      // If the date parsing failed, try parsing as ISO string
-      if (isNaN(past.getTime())) {
-        past = new Date(dateString.replace(/\.\d+Z?$/, 'Z'));
-      }
-      
-      // Ensure we have a valid date
-      if (isNaN(past.getTime())) {
-        return 'Just now';
-      }
-      
-      const diffMs = now.getTime() - past.getTime();
-      
-      // If time difference is negative (story from future), treat as "Just now"
-      if (diffMs < 0) {
-        return 'Just now';
-      }
-      
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays === 1) return 'Yesterday';
-      return `${diffDays}d ago`;
-    } catch (error) {
-      console.error('Error calculating relative time:', error);
-      return 'Just now';
-    }
-  };
+  // Calculate relative time (e.g., "2h ago", "24h ago")
+  const getRelativeTime = (dateString: string): string => getRelativeTimeLabel(dateString);
 
   if (loading) {
     return (
