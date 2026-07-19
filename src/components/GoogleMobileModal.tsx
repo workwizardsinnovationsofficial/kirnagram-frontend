@@ -37,7 +37,7 @@ export const GoogleMobileModal = ({
     }
 
     try {
-      const checkRes = await fetch("http://localhost:8000/auth/check-user", {
+      const checkRes = await fetch("https://api.kirnagram.com/auth/check-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "", mobile: value }),
@@ -85,7 +85,7 @@ export const GoogleMobileModal = ({
       const token = await user.getIdToken();
 
       // Update user profile with mobile number
-      const res = await fetch("http://localhost:8000/profile/update", {
+      const res = await fetch("https://api.kirnagram.com/profile/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

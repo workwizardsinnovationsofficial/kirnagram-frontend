@@ -7,7 +7,7 @@ import profileIcon from "@/assets/profileicon.png";
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type Post = {
   _id: string;

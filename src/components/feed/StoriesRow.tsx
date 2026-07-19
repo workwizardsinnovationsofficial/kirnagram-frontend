@@ -44,7 +44,7 @@ export function StoriesRow() {
   const [friendsStories, setFriendsStories] = useState<StoryUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<any | null>(null);
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+  const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
   const isValidRemoteImage = (url?: string) => {
     if (!url) return false;
@@ -133,7 +133,7 @@ export function StoriesRow() {
         const token = await user.getIdToken();
         
         // Fetch my stories separately for better control
-        const myStoriesResponse = await fetch("http://localhost:8000/stories/my-stories", {
+        const myStoriesResponse = await fetch("https://api.kirnagram.com/stories/my-stories", {
           headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -149,7 +149,7 @@ export function StoriesRow() {
         }
 
         // Fetch friends' stories feed (backend now includes own stories too)
-        const feedResponse = await fetch("http://localhost:8000/stories/feed", {
+        const feedResponse = await fetch("https://api.kirnagram.com/stories/feed", {
           headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -189,7 +189,7 @@ export function StoriesRow() {
       }
 
       const token = await user.getIdToken();
-      const response = await fetch(`http://localhost:8000/stories/delete/${storyId}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/delete/${storyId}`, {
         method: "DELETE",
         headers: { 
           Authorization: `Bearer ${token}`,

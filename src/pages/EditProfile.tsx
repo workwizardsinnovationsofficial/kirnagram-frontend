@@ -30,7 +30,7 @@ import { auth } from "@/firebase";
 import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const FULL_NAME_COOLDOWN_DAYS = 14;
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";

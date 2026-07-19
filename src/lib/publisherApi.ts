@@ -1,6 +1,6 @@
 import { auth } from "@/firebase";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 export type PublisherApplicationPayload = {
   full_name: string;

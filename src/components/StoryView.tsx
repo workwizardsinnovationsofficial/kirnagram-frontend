@@ -168,7 +168,7 @@ const StoryView: React.FC = () => {
         if (targetUserId) {
           // Fetch the specific user's stories with full details
           try {
-            const userStoriesResponse = await fetch(`http://localhost:8000/stories/user/${targetUserId}/stories`, {
+            const userStoriesResponse = await fetch(`https://api.kirnagram.com/stories/user/${targetUserId}/stories`, {
               headers: { 'Authorization': `Bearer ${token}` },
             });
             
@@ -177,7 +177,7 @@ const StoryView: React.FC = () => {
               
               if (targetUserData.stories && targetUserData.stories.length > 0) {
                 // Fetch the full feed to include other users' stories
-                const feedResponse = await fetch('http://localhost:8000/stories/feed', {
+                const feedResponse = await fetch('https://api.kirnagram.com/stories/feed', {
                   headers: { 'Authorization': `Bearer ${token}` },
                 });
                 
@@ -230,7 +230,7 @@ const StoryView: React.FC = () => {
         }
         
         // Fetch the main stories feed (default behavior)
-        const response = await fetch('http://localhost:8000/stories/feed', {
+        const response = await fetch('https://api.kirnagram.com/stories/feed', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         
@@ -302,7 +302,7 @@ const StoryView: React.FC = () => {
           if (!user) return;
           const token = await user.getIdToken();
           
-          const response = await fetch(`http://localhost:8000/stories/view/${currentStory.story_id}`, {
+          const response = await fetch(`https://api.kirnagram.com/stories/view/${currentStory.story_id}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
           });
@@ -351,7 +351,7 @@ const StoryView: React.FC = () => {
           
           const token = await user.getIdToken();
           
-          const response = await fetch(`http://localhost:8000/stories/stats/${currentStory.story_id}`, {
+          const response = await fetch(`https://api.kirnagram.com/stories/stats/${currentStory.story_id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
           
@@ -475,7 +475,7 @@ const StoryView: React.FC = () => {
       }
       const token = await user.getIdToken();
       
-      const response = await fetch(`http://localhost:8000/stories/like/${currentStory.story_id}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/like/${currentStory.story_id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -533,7 +533,7 @@ const StoryView: React.FC = () => {
       }
       const token = await user.getIdToken();
       
-      const response = await fetch(`http://localhost:8000/stories/delete/${currentStory.story_id}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/delete/${currentStory.story_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

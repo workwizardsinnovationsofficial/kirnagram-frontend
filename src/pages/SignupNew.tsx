@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">

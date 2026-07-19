@@ -61,7 +61,7 @@ describe("Login flow", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
     const [url, options] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(url).toBe("http://localhost:8000/auth/google-login");
+    expect(url).toBe("https://api.kirnagram.com/auth/google-login");
 
     const body = JSON.parse(options.body as string);
     expect(body.mobile).toBeUndefined();

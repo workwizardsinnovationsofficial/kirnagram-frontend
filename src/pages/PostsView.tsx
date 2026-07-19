@@ -12,7 +12,7 @@ import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
 import { Volume2, VolumeX } from "lucide-react";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type Post = {
   _id: string;

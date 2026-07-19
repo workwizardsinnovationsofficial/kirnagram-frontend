@@ -42,7 +42,7 @@ const emptyMessages: Record<string, string> = {
 };
 
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || API_BASE;
 
 const Profile = () => {

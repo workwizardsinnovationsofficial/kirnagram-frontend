@@ -33,7 +33,7 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:8000"}/auth/forgot-password-send-otp`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE || "https://api.kirnagram.com"}/auth/forgot-password-send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -113,7 +113,7 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:8000"}/auth/reset-password`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE || "https://api.kirnagram.com"}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

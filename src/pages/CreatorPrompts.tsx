@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type Prompt = {
   _id: string;

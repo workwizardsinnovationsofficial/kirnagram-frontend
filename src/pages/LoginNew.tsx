@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type LoginStep = "email_mobile_input" | "password_entry" | "forgot_password_email_mobile" | "forgot_password_otp" | "reset_password_entry";
 

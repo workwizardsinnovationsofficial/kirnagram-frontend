@@ -13,7 +13,7 @@ import {
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://api.kirnagram.com";
 const MAX_SAMPLE_IMAGES = 3;
 const CATEGORY_OPTIONS = [
   "Ghibli",

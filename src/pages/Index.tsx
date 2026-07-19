@@ -16,7 +16,7 @@ import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
 import SuggestedUsers from "@/components/feed/SuggestedUsers";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const FEED_CACHE_KEY = "kirnagram:home-feed-cache";
 const FEED_SCROLL_KEY = "kirnagram:home-feed-scroll";
 const ADSENSE_CLIENT = "ca-pub-4174888959110856";
