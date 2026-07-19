@@ -415,8 +415,8 @@ const Login = () => {
         // If this is a new user needing mobile verification, redirect to signup with Google
         if (errorMessage.includes("Mobile number is required") || errorMessage.includes("Mobile number not verified")) {
           toast({
-            title: "Mobile Verification Required",
-            description: "Please verify your mobile number to continue with Google signup",
+            title: "Continue with Google",
+            description: "This Google account is not registered. Please finish signup by verifying your mobile number.",
           });
           
           // Store Google profile data for signup flow
@@ -425,7 +425,7 @@ const Login = () => {
             profile,
           }));
           
-          // Redirect to signup
+          // Redirect to signup so user can complete mobile verification and account creation
           navigate("/signup");
           setLoading(false);
           return;

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import avatar2 from "@/assets/avatar-2.jpg";
 import { auth } from "@/firebase";
+import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
@@ -39,12 +40,12 @@ const EditCreatorProfile = () => {
   // Fetch profile data on mount
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
+      const token = await getAuthToken();
+      if (!token) {
         setLoading(false);
         return;
       }
       try {
-        const token = await user.getIdToken();
         const res = await fetch(`${API_BASE}/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -79,9 +80,8 @@ const EditCreatorProfile = () => {
     if (!profile) return;
     setSaved(true);
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Not authenticated");
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
+      if (!token) throw new Error("Not authenticated");
       const res = await fetch(`${API_BASE}/ai-creator/profile`, {
         method: "PUT",
         headers: {

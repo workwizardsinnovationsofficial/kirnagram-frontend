@@ -579,6 +579,60 @@ const Remix = () => {
     setWizardStep(1);
   };
 
+  const handleDownloadOutput = async () => {
+    if (!outputUrl || downloading) return;
+    try {
+      setDownloading(true);
+      let blob: Blob | null = null;
+      const user = auth.currentUser;
+
+      if (remixId) {
+        if (!user) {
+          throw new Error("Please login to download");
+        }
+        const token = await user.getIdToken();
+        const downloadResponse = await fetch(`${API_BASE}/remix/download/${remixId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!downloadResponse.ok) {
+          throw new Error(`Download failed: HTTP ${downloadResponse.status}`);
+        }
+        blob = await downloadResponse.blob();
+      } else {
+        const fallbackResponse = await fetch(outputUrl);
+        if (!fallbackResponse.ok) {
+          throw new Error(`Download failed: HTTP ${fallbackResponse.status}`);
+        }
+        blob = await fallbackResponse.blob();
+      }
+
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `kirnagram-remix-${remixId || Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(objectUrl);
+
+      toast({
+        title: "Downloaded",
+        description: "Remix image saved to your device.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Unable to download remix",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const renderPromptStep = () => (
     <div className="space-y-4">
       <div className="rounded-3xl border border-border/70 bg-muted/50 p-4">
@@ -595,11 +649,6 @@ const Remix = () => {
         </div>
       ) : null}
 
-      <div className="pt-2">
-        <Button onClick={() => setWizardStep(2)} className="w-full h-12">
-          Continue to remix
-        </Button>
-      </div>
     </div>
   );
 
@@ -802,8 +851,6 @@ const Remix = () => {
     </div>
   );
 
-  const showOverviewImage = promptInfo.image || uploadedPreview;
-
   /**
    * Adds Kirnagram logo + website text at the bottom-left of the provided image URL.
 
@@ -907,6 +954,8 @@ const Remix = () => {
     { label: "Upload & generate", step: 2 },
   ];
 
+  const showOutputOnly = Boolean(outputUrl && !generating);
+
   return (
     <MainLayout showRightSidebar={true}>
       <div className="max-w-5xl mx-auto pb-32 md:pb-8 space-y-6">
@@ -921,25 +970,27 @@ const Remix = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {stepLabels.map((stepInfo) => (
-              <button
-                key={stepInfo.step}
-                type="button"
-                onClick={() => setWizardStep(stepInfo.step as 1 | 2)}
-                className={`rounded-3xl border px-4 py-3 text-left transition ${
-                  wizardStep === stepInfo.step
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background text-muted-foreground hover:border-primary/70"
-                }`}
-              >
-                <span className="text-[10px] uppercase tracking-[0.24em]">
-                  Step {stepInfo.step}
-                </span>
-                <p className="mt-1 text-sm font-semibold">{stepInfo.label}</p>
-              </button>
-            ))}
-          </div>
+          {!showOutputOnly && (
+            <div className="grid grid-cols-3 gap-2">
+              {stepLabels.map((stepInfo) => (
+                <button
+                  key={stepInfo.step}
+                  type="button"
+                  onClick={() => setWizardStep(stepInfo.step as 1 | 2)}
+                  className={`rounded-3xl border px-4 py-3 text-left transition ${
+                    wizardStep === stepInfo.step
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/70"
+                  }`}
+                >
+                  <span className="text-[10px] uppercase tracking-[0.24em]">
+                    Step {stepInfo.step}
+                  </span>
+                  <p className="mt-1 text-sm font-semibold">{stepInfo.label}</p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
           <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
@@ -953,12 +1004,12 @@ const Remix = () => {
                   <p className="text-sm text-muted-foreground">{progressMessage}</p>
                 </div>
               </Card>
-            ) : (
+            ) : !showOutputOnly ? (
               <Card className="glass-card border border-border/60 p-4">
                 {renderActiveStep()}
                 <div className="mt-4">{stepButtons}</div>
               </Card>
-            )}
+            ) : null}
 
             {outputUrl && (
               <Card className="glass-card border border-border/60 p-5 space-y-4">
@@ -976,8 +1027,12 @@ const Remix = () => {
                   style={{ aspectRatio: ratio }}
                 />
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Button onClick={handleViewNotification} className="w-full">
-                    View remix
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/story/upload", { state: { imageUrl: outputUrl } })}
+                    className="w-full"
+                  >
+                    Add to story
                   </Button>
                   <Button
                     variant="secondary"
@@ -987,86 +1042,20 @@ const Remix = () => {
                     Add to post
                   </Button>
                   <Button
-                    variant="outline"
-                    onClick={() => navigate("/story/upload", { state: { imageUrl: outputUrl } })}
+                    onClick={handleDownloadOutput}
+                    disabled={downloading}
                     className="w-full"
                   >
-                    Add to story
+                    <Download className="w-4 h-4 mr-2" />
+                    {downloading ? "Downloading..." : "Download"}
                   </Button>
                 </div>
               </Card>
             )}
           </div>
-
-          {/* Show the right summary/preview only when a remix output exists */}
-          {outputUrl && (
-            <aside className="space-y-4">
-            <Card className="glass-card border border-border/60 p-4 space-y-4">
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prompt summary</p>
-                <div>
-                  <p className="text-sm text-muted-foreground">Style</p>
-                  <p className="font-semibold text-foreground">{promptInfo.style}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Description</p>
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                    {promptInfo.description || "No description available."}
-                  </p>
-                </div>
-                {tagsLabel ? (
-                  <div className="flex flex-wrap gap-2">
-                    {prompt.tags?.map((tag) => (
-                      <span key={tag} className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </Card>
-
-            <Card className="glass-card border border-border/60 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">Preview</p>
-                <span className="text-xs text-muted-foreground">{ratio}</span>
-              </div>
-              <div className="mt-4 rounded-3xl border border-border/70 bg-muted/50 overflow-hidden">
-                <img
-                  src={uploadedPreview || promptInfo.image || "https://via.placeholder.com/320x480?text=No+preview"}
-                  alt="Prompt preview"
-                  className="h-64 w-full object-cover"
-                />
-              </div>
-            </Card>
-
-            <Card className="glass-card border border-border/60 p-4 space-y-3">
-              <p className="text-sm text-muted-foreground">Generation status</p>
-              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-sm text-foreground">
-                <p>{generating ? "Generating now..." : "Ready to start when you press generate."}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{progressMessage}</p>
-              </div>
-            </Card>
-            </aside>
-          )}
         </div>
       </div>
-      {prompt && (
-        <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur-sm px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={handleNextStep}
-              disabled={wizardStep === 2 ? !uploadedFile || generating : false}
-              className="flex-1 h-12 bg-gradient-to-r from-secondary to-accent text-secondary-foreground font-semibold"
-            >
-              {wizardStep === 1 ? "Continue to remix" : generating ? "Generating..." : "Generate remix"}
-            </Button>
-            <span className="text-xs text-muted-foreground min-w-[72px] text-right">
-              {burnCost ?? "--"} cr
-            </span>
-          </div>
-        </div>
-      )}
+
     </MainLayout>
   );
 };

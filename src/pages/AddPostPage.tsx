@@ -9,7 +9,7 @@ import CropModal from "@/components/crop/CropModal";
 import { cn } from "@/lib/utils";
 import { auth } from "@/firebase";
 import { getAuthToken } from "@/lib/auth-utils";
-import { Crop, ImagePlus, Loader2, Plus, Send, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Crop, ImagePlus, Loader2, Plus, Send, Sparkles, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { resolveUploadRatio, type CropRatioOption } from "@/lib/cropImage";
 
@@ -34,6 +34,7 @@ const AddPostPage = () => {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [mediaRatio, setMediaRatio] = useState<string>("");
   const [selectedRatio, setSelectedRatio] = useState<CropRatioOption>("4:5");
   const cropContainerRef = useRef<HTMLDivElement | null>(null);
@@ -525,6 +526,7 @@ const AddPostPage = () => {
       setOffsetY(0);
       setIsCropEnabled(false);
       setIsVideo(false);
+      setCurrentStep(1);
       navigate("/profile");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Something went wrong";
@@ -538,6 +540,18 @@ const AddPostPage = () => {
     }
   };
 
+  const handleContinueToDetails = () => {
+    if (!selectedFile) {
+      toast({
+        title: "Select media first",
+        description: "Please choose an image or video before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCurrentStep(2);
+  };
+
   return (
     <MainLayout showRightSidebar={true}>
       <div className="mx-auto w-full max-w-7xl space-y-6 px-2 sm:px-4 lg:px-6">
@@ -548,200 +562,244 @@ const AddPostPage = () => {
               <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground">Create</p>
               <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Add Post</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Upload your artwork or video, adjust framing, and publish with tags.
+                Step 1: choose media. Step 2: add description and publish.
               </p>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-lg font-semibold">Description</h2>
-                <Textarea
-                  placeholder="Write a caption that tells your story..."
-                  value={caption}
-                  onChange={(event) => setCaption(event.target.value)}
-                  className="min-h-[140px] lg:min-h-[180px]"
-                />
+            <div className="rounded-2xl border border-border/80 bg-background/60 p-3 sm:p-4">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className={cn("font-semibold", currentStep === 1 ? "text-foreground" : "text-muted-foreground")}>1. Media</span>
+                <span className="h-px flex-1 mx-3 bg-border" />
+                <span className={cn("font-semibold", currentStep === 2 ? "text-foreground" : "text-muted-foreground")}>2. Details</span>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Media Picker
-                  </div>
-                  {previewUrl && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Change file
-                      </Button>
-                    </div>
-                  )}
-                </div>
+            <div className="space-y-6">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-
-                <div
-                  className={cn(
-                    "relative overflow-hidden rounded-2xl border border-dashed border-border bg-background/50 flex items-center justify-center",
-                    previewUrl ? "min-h-[340px] lg:min-h-[520px]" : "min-h-[360px] lg:min-h-[520px]",
-                  )}
-                >
-                  {previewUrl ? (
-                    isVideo ? (
-                      <div className="relative w-full" style={{ aspectRatio: "9/16" }}>
-                        <video
-                          src={previewUrl}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          controls
-                          className="w-full h-full rounded-2xl object-contain bg-black"
-                          style={{ aspectRatio: "9/16" }}
-                        />
+              {currentStep === 1 && (
+                <>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Select Media
                       </div>
-                    ) : isCropEnabled ? (
-                      <div className="flex flex-col items-center justify-center gap-3 py-4">
-                        <div
-                          className="relative rounded-xl overflow-hidden border-2 border-primary/30 shadow-md bg-black"
-                          style={{ 
-                            aspectRatio: cropAspectRatio, 
-                            width: "100%",
-                            maxWidth: "min(320px, 100%)",
-                            height: "auto"
-                          }}
-                          ref={previewContainerRef}
+                      {previewUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
                         >
-                          <img
-                            src={previewUrl}
-                            alt="Cropped preview"
-                            className="absolute top-1/2 left-1/2 object-cover max-w-none"
-                            style={{
-                              width: imageSize.width ? `${imageSize.width}px` : undefined,
-                              height: imageSize.height ? `${imageSize.height}px` : undefined,
-                              transform: `translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px) scale(${zoom * previewBaseScale})`,
-                              transformOrigin: "center",
-                            }}
-                          />
-                        </div>
-                        <div className="flex flex-col items-center gap-2 text-center">
-                          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">{selectedRatio}</p>
-                          <p className="text-[11px] text-muted-foreground max-w-xs">Final preview</p>
+                          Change File
+                        </Button>
+                      )}
+                    </div>
+
+                    <div
+                      className={cn(
+                        "relative overflow-hidden rounded-2xl border border-dashed border-border bg-background/50 flex items-center justify-center",
+                        previewUrl ? "min-h-[340px] lg:min-h-[520px]" : "min-h-[360px] lg:min-h-[520px]",
+                      )}
+                    >
+                      {previewUrl ? (
+                        isVideo ? (
+                          <div className="relative w-full" style={{ aspectRatio: "9/16" }}>
+                            <video
+                              src={previewUrl}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              controls
+                              className="w-full h-full rounded-2xl object-contain bg-black"
+                              style={{ aspectRatio: "9/16" }}
+                            />
+                          </div>
+                        ) : isCropEnabled ? (
+                          <div className="flex flex-col items-center justify-center gap-3 py-4 w-full px-2">
+                            <div
+                              className="relative rounded-xl overflow-hidden border-2 border-primary/30 shadow-md bg-black"
+                              style={{
+                                aspectRatio: cropAspectRatio,
+                                width: "100%",
+                                maxWidth: "min(320px, 100%)",
+                                height: "auto",
+                              }}
+                              ref={previewContainerRef}
+                            >
+                              <img
+                                src={previewUrl}
+                                alt="Cropped preview"
+                                className="absolute top-1/2 left-1/2 object-cover max-w-none"
+                                style={{
+                                  width: imageSize.width ? `${imageSize.width}px` : undefined,
+                                  height: imageSize.height ? `${imageSize.height}px` : undefined,
+                                  transform: `translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px) scale(${zoom * previewBaseScale})`,
+                                  transformOrigin: "center",
+                                }}
+                              />
+                            </div>
+                            <div className="flex flex-col items-center gap-2 text-center">
+                              <p className="text-xs font-semibold text-foreground uppercase tracking-wide">{selectedRatio}</p>
+                              <p className="text-[11px] text-muted-foreground max-w-xs">Final preview</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsCropOpen(true)}
+                                className="mt-1 h-9 px-4 text-sm font-medium"
+                              >
+                                <Crop className="w-4 h-4 mr-2" />
+                                Adjust
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center p-2" ref={previewContainerRef}>
+                            <img
+                              src={previewUrl}
+                              alt="Selected"
+                              className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain"
+                            />
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex flex-col items-center gap-4 text-center px-6">
+                          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                            <ImagePlus className="w-8 h-8 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold">Select an image or video to start</p>
+                            <p className="text-sm text-muted-foreground">
+                              Choose a photo, artwork, or video. {" "}
+                              {isVideo ? "Video preview keeps vertical format." : "Original image size is kept by default."}
+                            </p>
+                          </div>
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsCropOpen(true)}
-                            className="mt-2 h-9 px-4 text-sm font-medium"
+                            className="rounded-full"
+                            onClick={() => fileInputRef.current?.click()}
                           >
-                            <Crop className="w-4 h-4 mr-2" />
-                            Adjust
+                            <Plus className="w-4 h-4" />
+                            Choose File
                           </Button>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center p-2" ref={previewContainerRef}>
-                        <img
-                          src={previewUrl}
-                          alt="Selected"
-                          className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain"
-                        />
-                      </div>
-                    )
-                  ) : (
-                    <div className="flex flex-col items-center gap-4 text-center px-6">
-                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <ImagePlus className="w-8 h-8 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-semibold">Select an image or video to start</p>
-                        <p className="text-sm text-muted-foreground">
-                          Choose a photo, artwork, or video. {" "}
-                          {isVideo ? "Video preview keeps vertical format." : "Original image size is kept by default."}
-                        </p>
-                      </div>
-                      <Button
-                        className="rounded-full"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Choose File
-                      </Button>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                {previewUrl && !isVideo && (
-                  <div className="mt-6 flex items-center justify-center">
-                    <Button 
-                      variant="secondary" 
-                      size="lg" 
-                      onClick={() => setIsCropOpen(true)}
-                      className="w-full sm:w-auto rounded-full gap-2 h-11 text-base font-semibold"
-                    >
-                      <Crop className="w-5 h-5" />
-                      {isCropEnabled ? "Edit Crop" : "Crop"}
+
+                    {previewUrl && !isVideo && (
+                      <div className="mt-3 flex items-center justify-center">
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          onClick={() => setIsCropOpen(true)}
+                          className="w-full sm:w-auto rounded-full gap-2 h-11 text-base font-semibold"
+                        >
+                          <Crop className="w-5 h-5" />
+                          {isCropEnabled ? "Edit Crop" : "Crop"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    className="w-full rounded-full gap-2 h-11 text-sm font-semibold"
+                    onClick={handleContinueToDetails}
+                    disabled={!selectedFile}
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <>
+                  <div className="rounded-2xl border border-border bg-background/50 p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">Media selected</p>
+                      <p className="text-xs text-muted-foreground">You can still replace the file before posting.</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      Change
                     </Button>
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Tags</h2>
-                  <span className="text-xs text-muted-foreground">Press Enter to add</span>
-                </div>
-                <Input
-                  placeholder="Add tags (e.g., cyberpunk, neon)"
-                  value={tagInput}
-                  onChange={(event) => setTagInput(event.target.value)}
-                  onKeyDown={handleTagKeyDown}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} className="flex items-center gap-1 pr-1" variant="secondary">
-                      <span>#{tag}</span>
-                      <button
-                        type="button"
-                        className="rounded-full p-1 hover:bg-muted"
-                        onClick={() => setTags((prev) => prev.filter((item) => item !== tag))}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <h2 className="text-lg font-semibold">Description</h2>
+                    <Textarea
+                      placeholder="Write a caption that tells your story..."
+                      value={caption}
+                      onChange={(event) => setCaption(event.target.value)}
+                      className="min-h-[140px] lg:min-h-[180px]"
+                    />
+                  </div>
 
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Post Settings</h2>
-                <div className="rounded-2xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
-                  <p>Make sure your image is centered and looks great in the preview.</p>
-                  <p className="mt-1">Use the crop button anytime to adjust the framing.</p>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">Tags</h2>
+                      <span className="text-xs text-muted-foreground">Press Enter to add</span>
+                    </div>
+                    <Input
+                      placeholder="Add tags (e.g., cyberpunk, neon)"
+                      value={tagInput}
+                      onChange={(event) => setTagInput(event.target.value)}
+                      onKeyDown={handleTagKeyDown}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <Badge key={tag} className="flex items-center gap-1 pr-1" variant="secondary">
+                          <span>#{tag}</span>
+                          <button
+                            type="button"
+                            className="rounded-full p-1 hover:bg-muted"
+                            onClick={() => setTags((prev) => prev.filter((item) => item !== tag))}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
 
-              <Button
-                className="w-full rounded-full gap-2 h-11 text-sm font-semibold"
-                onClick={handleSendPost}
-                disabled={(isSubmitting || (!selectedFile && !caption.trim()))}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                {isSubmitting ? "Uploading..." : "Send Post"}
-              </Button>
+                  <div className="space-y-3">
+                    <h2 className="text-lg font-semibold">Post Settings</h2>
+                    <div className="rounded-2xl border border-border bg-background/60 p-4 text-sm text-muted-foreground">
+                      <p>Make sure your image is centered and looks great in the preview.</p>
+                      <p className="mt-1">Use the crop button anytime to adjust the framing.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-full gap-2 h-11 text-sm font-semibold"
+                      onClick={() => setCurrentStep(1)}
+                      disabled={isSubmitting}
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Back
+                    </Button>
+                    <Button
+                      className="w-full rounded-full gap-2 h-11 text-sm font-semibold"
+                      onClick={handleSendPost}
+                      disabled={isSubmitting || !selectedFile}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      {isSubmitting ? "Uploading..." : "Post"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

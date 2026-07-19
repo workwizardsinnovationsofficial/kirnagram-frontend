@@ -17,6 +17,14 @@ const VerifyMobileGoogle = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
 
+  // Redirect if this page is opened without a pending Google signup
+  useEffect(() => {
+    const googleAuthData = sessionStorage.getItem("googleAuthPending");
+    if (!googleAuthData) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
   // Timer for OTP resend
   useEffect(() => {
     if (timer > 0) {

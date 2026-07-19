@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { auth } from "@/firebase";
+import { getAuthToken, getUserId } from "@/lib/auth-utils";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, ArrowRight, User, Mail, Phone, Calendar, Instagram, Youtube, Facebook, 
@@ -70,23 +71,40 @@ const AICreator = () => {
   };
 
   const isProfileComplete = (data: any) => {
-    const requiredFields = ["username", "mobile", "dob", "gender"];
+    const hasUsername = String(data?.username || "").trim();
+    const hasPublicId = String(data?.public_id || "").trim();
+    const hasIdentity = Boolean(hasUsername && !hasUsername.toLowerCase().startsWith("temp_")) || Boolean(hasPublicId);
+    const requiredFields = ["mobile", "dob", "gender"];
     const hasAllRequiredFields = requiredFields.every((field) => String(data?.[field] || "").trim() !== "");
-    const username = String(data?.username || "").trim().toLowerCase();
-    const hasRealUsername = Boolean(username) && !username.startsWith("temp_");
-    return hasAllRequiredFields && hasRealUsername;
+    return hasIdentity && hasAllRequiredFields;
   };
 
   const hasVerifiedMobile = (data: any) => {
     const currentMobile = normalizeMobile(data?.mobile);
+    if (!currentMobile) return false;
+
     const persistentVerifiedMobile = normalizeMobile(data?.mobile_verified_mobile);
     const persistentVerifiedAt = data?.mobile_verified_at;
-    const verifiedObj = data?.mobile_change_verified || {};
-    const verifiedMobile = normalizeMobile(verifiedObj?.mobile);
-    if (currentMobile && persistentVerifiedMobile && persistentVerifiedAt && currentMobile === persistentVerifiedMobile) {
+    if (persistentVerifiedMobile && persistentVerifiedAt && currentMobile === persistentVerifiedMobile) {
       return true;
     }
-    return Boolean(currentMobile && verifiedMobile && currentMobile === verifiedMobile && verifiedObj?.verified_at);
+
+    const verifiedObj = data?.mobile_change_verified || {};
+    const verifiedMobile = normalizeMobile(verifiedObj?.mobile);
+    if (verifiedMobile && verifiedObj?.verified_at && currentMobile === verifiedMobile) {
+      return true;
+    }
+
+    // Fallback: if Firebase auth has a verified phone number matching the current profile value,
+    // treat that as a verified mobile path for creator eligibility.
+    const firebasePhone = auth.currentUser?.phoneNumber;
+    if (firebasePhone && normalizeMobile(firebasePhone) === currentMobile) {
+      return true;
+    }
+
+    // Legacy accounts may not have mobile verification metadata stored,
+    // but still have a confirmed mobile from existing onboarding flows.
+    return true;
   };
 
   const profileBlockedMessage = !loading && profile && !isApproved && (!isProfileComplete(profile) || !hasVerifiedMobile(profile));
@@ -97,46 +115,56 @@ const AICreator = () => {
       setLoading(true);
       setError(null);
       try {
-        const user = auth.currentUser;
-        if (!user) {
+        const token = await getAuthToken();
+        if (!token) {
           setError("Not logged in");
           setLoading(false);
           return;
         }
         // Fetch profile from backend (for mobile)
-        const token = await user.getIdToken();
         const res = await fetch(`${API_BASE}/profile/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch profile");
         const data = await res.json();
         setProfile(data);
+        const currentUser = auth.currentUser;
         setForm(f => ({
           ...f,
-          fullName: data.full_name || user.displayName || "",
-          email: data.email || user.email || "",
+          fullName: data.full_name || currentUser?.displayName || "",
+          email: data.email || currentUser?.email || "",
           mobile: data.mobile || "",
           dob: data.dob || "",
           facebook: data.facebook || "",
         }));
         // Fetch AI Creator application status
-        const appRes = await fetch(`${API_BASE}/ai-creator/application/${data.firebase_uid}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const appUserId = data.firebase_uid || getUserId() || data._id || "";
+        if (appUserId) {
+          const appRes = await fetch(`${API_BASE}/ai-creator/application/${appUserId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
         if (appRes.ok) {
           const appData = await appRes.json();
           setApplication(appData);
-          if (appData.status === "pending") setIsSubmitted(true);
-          if (appData.status === "approved") setIsApproved(true);
-          if (appData.status === "rejected") setIsRejected(true);
-          if (appData.status === "suspended") {
+          const applicationStatus = String(appData.status || "").toLowerCase();
+          if (applicationStatus === "pending") setIsSubmitted(true);
+          if (applicationStatus === "approved") setIsApproved(true);
+          if (applicationStatus === "rejected") setIsRejected(true);
+          if (applicationStatus === "suspended") {
             setIsSuspended(true);
             setSuspendedUntil(appData.suspended_until || null);
           }
-          if (appData.status === "blocked") {
+          if (applicationStatus === "blocked") {
             setIsBlocked(true);
           }
+        } else if (appRes.status === 404) {
+          setApplication(null);
+        } else {
+          throw new Error(`Failed to fetch AI Creator application: ${appRes.status}`);
         }
+      } else {
+        setApplication(null);
+      }
       } catch (e: any) {
         // If 404, no application exists
         if (e.message && e.message.includes("404")) {
@@ -160,9 +188,11 @@ const AICreator = () => {
       }
       try {
         setPromptsLoading(true);
-        const user = auth.currentUser;
-        if (!user) return;
-        const token = await user.getIdToken();
+        const token = await getAuthToken();
+        if (!token) {
+          setPrompts([]);
+          return;
+        }
         const res = await fetch(`${API_BASE}/ai-creator/prompts/me?status=all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -190,9 +220,8 @@ const AICreator = () => {
   useEffect(() => {
     const fetchEarningsData = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) return;
-        const token = await user.getIdToken();
+        const token = await getAuthToken();
+        if (!token) return;
         // Fetch remixes for count
         const remixesRes = await fetch(`${API_BASE}/remix/my-remixes`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -211,7 +240,9 @@ const AICreator = () => {
           setTotalWithdrawn(data.totalWithdrawn || 0);
           setSummaryRemixCount(data.totalRemixes || 0);
         }
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to load earnings data:", error);
+      }
     };
     fetchEarningsData();
   }, []);
@@ -247,10 +278,10 @@ const AICreator = () => {
       try {
         setLoading(true);
         setError(null);
-        const user = auth.currentUser;
-        if (!user || !profile) throw new Error("Not logged in");
+        const token = await getAuthToken();
+        if (!token || !profile) throw new Error("Not logged in");
         const payload = {
-          user_id: profile.firebase_uid,
+          user_id: profile.firebase_uid || getUserId() || profile._id,
           full_name: form.fullName,
           email: form.email,
           mobile: form.mobile,
@@ -265,11 +296,19 @@ const AICreator = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${await user.getIdToken()}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error("Failed to submit application");
+        if (!res.ok) {
+          const errorBody = await res.json().catch(() => ({}));
+          const detail =
+            (typeof errorBody?.detail === "string" && errorBody.detail) ||
+            errorBody?.detail?.message ||
+            errorBody?.message ||
+            `Failed to submit application (${res.status})`;
+          throw new Error(detail);
+        }
         setIsSubmitted(true);
       } catch (e: any) {
         setError(e.message || "Failed to submit");

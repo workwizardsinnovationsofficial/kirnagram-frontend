@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Loader, CheckCircle, ArrowLeft } from "lucide-react";
 import kirnagramLogoText from "@/assets/kirnagram@2.png";
 import heroBanner from "@/assets/hero-banner.jpg";
@@ -48,6 +48,30 @@ const SignupNew = () => {
   const [emailOtp, setEmailOtp] = useState("");
   const [googleProfile, setGoogleProfile] = useState<{ idToken?: string; name?: string; email?: string; picture?: string; dob?: string | null; gender?: string | null } | null>(null);
   const [googleFlow, setGoogleFlow] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const pending = sessionStorage.getItem("googleAuthPending");
+    if (!pending) return;
+
+    try {
+      const { idToken, profile } = JSON.parse(pending);
+      if (!idToken || !profile?.email) return;
+
+      setGoogleProfile({ idToken, ...profile });
+      setGoogleFlow(true);
+      setFullName(profile.name || "");
+      setEmail(profile.email || "");
+      setEmailAdded(true);
+      setEmailVerified(true);
+      setMobile("");
+      setMobileOtp("");
+      setMobileOtpSent(false);
+      setStep("mobile_input");
+    } catch {
+      // Ignore invalid pending Google auth data.
+    }
+  }, [location.pathname]);
 
   // ============ Verification States ============
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
@@ -491,12 +515,13 @@ const SignupNew = () => {
         email: (emailAdded && emailVerified) || googleFlow ? (googleFlow ? googleProfile?.email : email.toLowerCase().trim()) : undefined,
       });
 
+      sessionStorage.removeItem("googleAuthPending");
+
       toast({
         title: "Account created",
         description: "Welcome to Kirnagram.",
       });
 
-      // Redirect to home after brief delay
       setTimeout(() => {
         navigate("/home");
       }, 500);

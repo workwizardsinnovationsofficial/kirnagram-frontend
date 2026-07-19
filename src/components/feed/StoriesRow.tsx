@@ -213,7 +213,7 @@ export function StoriesRow() {
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide md:gap-6 -mx-4 px-4 lg:mx-0 lg:px-0 py-4">
+    <div className="flex gap-4 overflow-x-auto pb-2 sm:pb-3 scrollbar-hide md:gap-6 -mx-4 px-4 lg:mx-0 lg:px-0 py-1 sm:py-2">
       {/* ✨ ADD STORY BUTTON - Orange gradient like Instagram (avatar + plus badge) */}
       <div className="flex flex-col items-center gap-3 flex-shrink-0 group">
         <button

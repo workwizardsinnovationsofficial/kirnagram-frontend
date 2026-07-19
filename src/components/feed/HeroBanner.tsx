@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner2.png";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 type HomeAd = {
   _id: string;
@@ -31,15 +31,17 @@ export function HeroBanner() {
           return;
         }
         const data = await res.json();
-        const items: HomeAd[] = Array.isArray(data?.items) ? data.items : [];
+        const items: HomeAd[] = Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data?.ads)
+          ? data.ads
+          : Array.isArray(data)
+          ? data
+          : [];
         
         if (items.length > 0) {
           setAds(items);
-          if (items.length > 1) {
-            setCurrentIndex(Math.floor(Math.random() * items.length));
-          } else {
-            setCurrentIndex(0);
-          }
+          setCurrentIndex(items.length > 1 ? Math.floor(Math.random() * items.length) : 0);
         } else {
           console.warn("No ads available from API");
           setAds([]);

@@ -578,12 +578,12 @@ const Explore = () => {
             </div>
           </div>
           {topTags.length > 0 && !searchQuery.trim() && (
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Popular hashtags</p>
                 <span className="text-xs text-muted-foreground">{topTags.length} tags</span>
               </div>
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="mt-2 sm:mt-3 w-full flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap pb-1 sm:pb-2 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {topTags.map((tag) => (
                   <button
                     key={tag}
@@ -764,7 +764,7 @@ const Explore = () => {
         {!searchQuery.trim() && (
           <div className="w-full min-h-screen pb-24 md:pb-8 bg-background overflow-x-hidden">
             <div className="max-w-2xl md:max-w-6xl mx-auto">
-              <div className="sticky md:relative top-16 md:top-auto z-40 md:z-auto bg-background/95 backdrop-blur-sm py-2 sm:py-3 px-3 sm:px-4 md:px-6 mb-6 sm:mb-8">
+                  <div className="relative z-10 bg-background/95 backdrop-blur-sm py-0 sm:py-1 px-3 sm:px-4 md:px-6 mb-1 sm:mb-3">
          <StoriesRow />
           </div>
         {/* Spotlight Section */}

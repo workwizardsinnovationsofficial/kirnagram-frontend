@@ -9,8 +9,9 @@ describe('getRelativeTimeLabel', () => {
     expect(getRelativeTimeLabel('2024-01-01T08:00:00.000Z', now)).toBe('4h ago');
   });
 
-  it('uses a 24-hour label once the story is older than a day', () => {
+  it('uses a day label once the story is older than a day', () => {
     const now = new Date('2024-01-02T12:00:00.000Z');
-    expect(getRelativeTimeLabel('2023-12-31T12:00:00.000Z', now)).toBe('24h ago');
+    expect(getRelativeTimeLabel('2024-01-01T12:00:00.000Z', now)).toBe('1d ago');
+    expect(getRelativeTimeLabel('2023-12-31T12:00:00.000Z', now)).toBe('2d ago');
   });
 });

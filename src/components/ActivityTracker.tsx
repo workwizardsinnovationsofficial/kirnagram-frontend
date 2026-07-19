@@ -1,23 +1,28 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { auth } from "@/firebase";
+import { getAuthToken } from "@/lib/auth-utils";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 async function pingActivity() {
-  const user = auth.currentUser;
-  if (!user) return;
+  const token = await getAuthToken();
+  if (!token) return;
 
   try {
-    const token = await user.getIdToken();
-    await fetch(`${API_BASE}/auth/activity-ping`, {
+    const res = await fetch(`${API_BASE}/auth/activity-ping`, {
       method: "POST",
+      mode: "cors",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-  } catch {
+    if (!res.ok) {
+      console.warn("Activity ping failed", res.status);
+    }
+  } catch (error) {
     // Silent fail: tracking must not interrupt app usage.
+    console.warn("Activity ping error", error);
   }
 }
 

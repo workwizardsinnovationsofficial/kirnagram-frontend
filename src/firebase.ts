@@ -18,12 +18,26 @@ type StoredUser = {
 type AuthListener = (user: AuthUser | null) => void;
 
 declare global {
+  interface GooglePromptNotification {
+    isNotDisplayed?: () => boolean;
+    isSkippedMoment?: () => boolean;
+    isDismissedMoment?: () => boolean;
+    isDisplayMoment?: () => boolean;
+    isGranted?: () => boolean;
+  }
+
   interface Window {
     google?: {
       accounts: {
         id: {
-          initialize: (options: Record<string, unknown>) => void;
-          prompt: (callback: (notification: Record<string, unknown>) => void) => void;
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+          }) => void;
+          prompt: (callback: (notification: GooglePromptNotification) => void) => void;
+          renderButton?: (container: HTMLElement, options: Record<string, unknown>) => void;
         };
       };
     };
@@ -268,31 +282,11 @@ export const getGoogleAuthProfile = async () => {
       cancel_on_tap_outside: false,
     });
 
-    // Show Google One Tap UI
+    // Show Google One Tap UI if available.
+    // The page already provides its own Google button, so we avoid rendering a duplicate fallback button.
     window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // One Tap not available, fall back to renderButton
-        const buttonDiv = document.createElement("div");
-        buttonDiv.id = "google-signin-button-container";
-        buttonDiv.style.display = "flex";
-        buttonDiv.style.justifyContent = "center";
-        buttonDiv.style.marginTop = "10px";
-        document.body.appendChild(buttonDiv);
-
-        window.google.accounts.id.renderButton(buttonDiv, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "signin",
-        });
-
-        // Set timeout for fallback button flow
-        timeoutId = setTimeout(() => {
-          if (!resolved) {
-            document.body.removeChild(buttonDiv);
-            reject(new Error("Google sign-in timeout"));
-          }
-        }, 30000);
+      if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
+        return;
       }
     });
 

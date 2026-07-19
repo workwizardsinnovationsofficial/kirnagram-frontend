@@ -1,6 +1,14 @@
 export const getRelativeTimeLabel = (dateString: string, now: Date = new Date()) => {
   try {
-    const createdAt = new Date(dateString);
+    const rawValue = String(dateString || '').trim();
+    // Backend often returns UTC datetimes without timezone suffix (e.g. 2026-07-19T12:34:56.789).
+    // Treat those as UTC explicitly so clients in non-UTC timezones don't see inflated "x h ago" values.
+    const hasTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(rawValue);
+    const normalizedValue = !hasTimezone && /^\d{4}-\d{2}-\d{2}T/.test(rawValue)
+      ? `${rawValue}Z`
+      : rawValue;
+
+    const createdAt = new Date(normalizedValue);
     if (Number.isNaN(createdAt.getTime())) {
       return 'Just now';
     }
@@ -21,11 +29,12 @@ export const getRelativeTimeLabel = (dateString: string, now: Date = new Date())
       return `${diffMinutes}m ago`;
     }
 
-    if (diffHours > 24) {
-      return '24h ago';
+    if (diffHours < 24) {
+      return `${Math.max(diffHours, 1)}h ago`;
     }
 
-    return `${Math.max(diffHours, 1)}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return diffDays === 1 ? '1d ago' : `${diffDays}d ago`;
   } catch (error) {
     return 'Just now';
   }
