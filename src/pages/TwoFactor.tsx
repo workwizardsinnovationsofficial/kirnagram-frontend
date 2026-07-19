@@ -23,7 +23,7 @@ const TwoFactor = () => {
       setEmail(user.email || "");
 
       const token = await user.getIdToken();
-      const res = await fetch("https://api.kirnagram.com/profile/me", {
+      const res = await fetch("http://localhost:8000/profile/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -43,7 +43,7 @@ const TwoFactor = () => {
 
     const token = await user.getIdToken();
 
-    await fetch("https://api.kirnagram.com/2fa/request", {
+    await fetch("http://localhost:8000/2fa/request", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -69,8 +69,8 @@ const TwoFactor = () => {
 
       const endpoint =
         actionType === "enable"
-          ? "https://api.kirnagram.com/2fa/verify"
-          : "https://api.kirnagram.com/2fa/disable";
+          ? "http://localhost:8000/2fa/verify"
+          : "http://localhost:8000/2fa/disable";
 
       const res = await fetch(endpoint, {
         method: "POST",

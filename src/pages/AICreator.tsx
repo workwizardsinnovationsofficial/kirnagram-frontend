@@ -26,7 +26,7 @@ const creatorLandingBenefits = [
   { icon: Heart, title: "Priority Support", description: "Faster help for active AI creators." },
 ];
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
 const AICreator = () => {

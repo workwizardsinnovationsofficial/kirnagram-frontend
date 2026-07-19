@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import heroBanner from "@/assets/hero-banner2.png";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://localhost:8000";
 
 type HomeAd = {
   _id: string;

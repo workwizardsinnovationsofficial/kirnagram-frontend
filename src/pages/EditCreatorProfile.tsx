@@ -6,7 +6,7 @@ import avatar2 from "@/assets/avatar-2.jpg";
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const EditCreatorProfile = () => {
   const navigate = useNavigate();

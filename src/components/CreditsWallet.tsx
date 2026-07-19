@@ -10,7 +10,7 @@ import { claimDailyCredits, CreditsSummary, fetchCreditsSummary } from "@/lib/cr
 import { toast } from "@/components/ui/use-toast";
 
 const DAILY_BONUS_AD_SECONDS = 6;
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || "";
 
 const buyCredits = async (amount: number) => {

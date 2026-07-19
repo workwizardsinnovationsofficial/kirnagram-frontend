@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://localhost:8000";
 
 type LoginStep = "email_mobile_input" | "password_entry" | "forgot_password_email_mobile" | "forgot_password_otp" | "reset_password_entry";
 
@@ -408,25 +408,30 @@ const Login = () => {
 
       const data = await response.json().catch(() => ({}));
       
-      // Check if mobile verification is needed
-      if (data.needs_mobile_verification) {
-        toast({
-          title: "Mobile Verification Required",
-          description: "Please verify your mobile number to continue",
-        });
-        // Store Google profile data in session for later
-        sessionStorage.setItem("googleAuthPending", JSON.stringify({
-          idToken,
-          profile,
-        }));
-        // Redirect to mobile verification - we'll create a dedicated page for this
-        navigate("/auth/verify-mobile-google", { state: { email: profile.email } });
-        setLoading(false);
-        return;
-      }
-      
+      // Handle errors that require mobile verification
       if (!response.ok) {
-        throw new Error(data.detail || data.message || "Google login failed");
+        const errorMessage = data.detail || data.message || "Google login failed";
+        
+        // If this is a new user needing mobile verification, redirect to signup with Google
+        if (errorMessage.includes("Mobile number is required") || errorMessage.includes("Mobile number not verified")) {
+          toast({
+            title: "Mobile Verification Required",
+            description: "Please verify your mobile number to continue with Google signup",
+          });
+          
+          // Store Google profile data for signup flow
+          sessionStorage.setItem("googleAuthPending", JSON.stringify({
+            idToken,
+            profile,
+          }));
+          
+          // Redirect to signup
+          navigate("/signup");
+          setLoading(false);
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       setAuthSession(data.access_token, data.refresh_token, {
@@ -437,23 +442,23 @@ const Login = () => {
         photoURL: profile.picture || null,
       });
 
-      // Check if password setup is needed
-      if (data.needs_password_setup) {
+      // Check if password setup is needed (new Google accounts)
+      if (data.is_new_user) {
         toast({
-          title: "Setup Required",
-          description: "Please set up a password for your account",
+          title: "Account created",
+          description: "Welcome to Kirnagram! Your account is ready.",
         });
-        // Redirect to password setup page
-        navigate("/auth/setup-password");
       } else {
         toast({
           title: "Login successful",
           description: "Welcome back.",
         });
-        setTimeout(() => {
-          navigate("/home");
-        }, 500);
       }
+      
+      // Navigate to home after a brief delay
+      setTimeout(() => {
+        navigate("/home");
+      }, 500);
     } catch (err: any) {
       toast({
         title: "Google login failed",

@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
 import { Download, ArrowLeft } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "http://localhost:8001";
 
 // ⏱️ REQUEST TIMEOUT (30 seconds for main requests, 15 for optional)

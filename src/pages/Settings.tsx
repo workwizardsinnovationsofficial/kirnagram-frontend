@@ -34,7 +34,7 @@ const Settings = () => {
       if (!user) return;
       try {
         const token = await user.getIdToken();
-        const res = await fetch("https://api.kirnagram.com/profile/me", {
+        const res = await fetch("http://localhost:8000/profile/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -73,7 +73,7 @@ const Settings = () => {
 
       const nextValue = !isPrivateAccount;
       const token = await user.getIdToken();
-      const res = await fetch("https://api.kirnagram.com/profile/update", {
+      const res = await fetch("http://localhost:8000/profile/update", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

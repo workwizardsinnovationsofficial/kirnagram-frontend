@@ -13,7 +13,7 @@ import { Crop, ImagePlus, Loader2, Plus, Send, Sparkles, X } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom";
 import { resolveUploadRatio, type CropRatioOption } from "@/lib/cropImage";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://localhost:8000";
 
 const AddPostPage = () => {
   const navigate = useNavigate();

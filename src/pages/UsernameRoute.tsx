@@ -3,7 +3,7 @@ import { useParams, Navigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import NotFound from "./NotFound";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const UsernameRoute = () => {
   const { username } = useParams<{ username: string }>();

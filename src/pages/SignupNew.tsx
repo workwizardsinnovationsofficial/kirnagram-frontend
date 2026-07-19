@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://localhost:8000";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -204,11 +204,13 @@ const SignupNew = () => {
       setMobileVerified(true);
       toast({
         title: "Mobile verified",
-        description: googleFlow ? "Finishing your account setup" : "Moving to next step",
+        description: "Mobile number verified successfully",
       });
 
+      // If this is a Google signup flow, immediately proceed to account creation
       if (googleFlow) {
-        const response = await fetch(`${API_BASE}/auth/google-login`, {
+        // Directly call google-login with the verified mobile
+        const loginResponse = await fetch(`${API_BASE}/auth/google-login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -222,24 +224,30 @@ const SignupNew = () => {
           }),
         });
 
-        const data = await response.json();
+        const loginData = await loginResponse.json();
 
-        if (!response.ok) {
-          throw new Error(data.detail || data.message || "Google signup failed");
+        if (!loginResponse.ok) {
+          throw new Error(loginData.detail || loginData.message || "Google signup failed");
         }
 
-        setAuthSession(data.access_token, data.refresh_token, {
-          user_id: data.user_id,
-          public_id: data.public_id || "",
-          full_name: data.full_name || fullName,
+        setAuthSession(loginData.access_token, loginData.refresh_token, {
+          user_id: loginData.user_id,
+          public_id: loginData.public_id || "",
+          full_name: loginData.full_name || fullName,
           email: googleProfile?.email || undefined,
           photoURL: googleProfile?.picture || null,
+        });
+
+        toast({
+          title: "Account created",
+          description: "Welcome to Kirnagram!",
         });
 
         navigate("/home");
         return;
       }
 
+      // For regular signup, continue to email step
       setStep("email_option");
     } catch (err: any) {
       toast({

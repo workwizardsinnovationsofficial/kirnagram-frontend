@@ -15,7 +15,7 @@ import { auth } from "@/firebase";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Download, Image as ImageIcon, Sparkles, Upload } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "https://api-r.kirnagram.com";
 
 const normalizeVariableKey = (value: string) =>

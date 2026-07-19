@@ -120,7 +120,7 @@ const hydrateAuthFromStorage = () => {
 
 hydrateAuthFromStorage();
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://localhost:8000";
 
 const decodeJwtPayload = (token: string) => {
   const segments = token.split(".");
@@ -221,73 +221,88 @@ export const getGoogleAuthProfile = async () => {
 
   await loadGoogleScript();
 
-  const response = await new Promise<{ credential?: string }>((resolve, reject) => {
+  return new Promise<{ idToken: string; profile: any }>((resolve, reject) => {
     if (!window.google?.accounts?.id) {
       reject(new Error("Google auth is unavailable"));
       return;
     }
 
+    let timeoutId: NodeJS.Timeout | undefined;
     let resolved = false;
+
+    const handleResponse = (googleResponse: { credential?: string }) => {
+      if (resolved) return;
+      resolved = true;
+
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (!googleResponse.credential) {
+        reject(new Error("Google sign-in did not return a credential"));
+        return;
+      }
+
+      try {
+        const payload = decodeJwtPayload(googleResponse.credential);
+
+        resolve({
+          idToken: googleResponse.credential,
+          profile: {
+            name: payload.name || payload.given_name || "",
+            email: payload.email || "",
+            picture: payload.picture || "",
+            dob: payload.birthdate || null,
+            gender: payload.gender || null,
+            given_name: payload.given_name || "",
+            family_name: payload.family_name || "",
+          },
+        });
+      } catch (err) {
+        reject(new Error(`Failed to decode Google token: ${err instanceof Error ? err.message : String(err)}`));
+      }
+    };
+
     window.google.accounts.id.initialize({
       client_id: clientId,
-      callback: (googleResponse: { credential?: string }) => {
-        resolved = true;
-        if (googleResponse.credential) {
-          resolve(googleResponse);
-        } else {
-          reject(new Error("Google sign-in did not return a credential"));
-        }
-      },
+      callback: handleResponse,
       auto_select: false,
       cancel_on_tap_outside: false,
     });
 
-    // Use renderButton with implicit flow instead of prompt
-    const buttonDiv = document.createElement("div");
-    buttonDiv.id = "google-signin-button-temp";
-    buttonDiv.style.display = "none";
-    document.body.appendChild(buttonDiv);
+    // Show Google One Tap UI
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // One Tap not available, fall back to renderButton
+        const buttonDiv = document.createElement("div");
+        buttonDiv.id = "google-signin-button-container";
+        buttonDiv.style.display = "flex";
+        buttonDiv.style.justifyContent = "center";
+        buttonDiv.style.marginTop = "10px";
+        document.body.appendChild(buttonDiv);
 
-    window.google.accounts.id.renderButton(buttonDiv, {
-      type: "standard",
-      theme: "outline",
-      size: "large",
-      text: "signin",
+        window.google.accounts.id.renderButton(buttonDiv, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "signin",
+        });
+
+        // Set timeout for fallback button flow
+        timeoutId = setTimeout(() => {
+          if (!resolved) {
+            document.body.removeChild(buttonDiv);
+            reject(new Error("Google sign-in timeout"));
+          }
+        }, 30000);
+      }
     });
 
-    // Simulate button click
-    const button = buttonDiv.querySelector("div[role='button']") as HTMLElement;
-    if (button) {
-      button.click();
-    }
-
-    // Timeout after 30 seconds
-    setTimeout(() => {
-      document.body.removeChild(buttonDiv);
+    // Timeout as safety net
+    timeoutId = setTimeout(() => {
       if (!resolved) {
         reject(new Error("Google sign-in timeout"));
       }
-    }, 30000);
+    }, 35000);
   });
-
-  if (!response.credential) {
-    throw new Error("Google sign-in did not return a credential");
-  }
-
-  const payload = decodeJwtPayload(response.credential);
-
-  return {
-    idToken: response.credential,
-    profile: {
-      name: payload.name || payload.given_name || "",
-      email: payload.email || "",
-      picture: payload.picture || "",
-      dob: payload.birthdate || null,
-      gender: payload.gender || null,
-      given_name: payload.given_name || "",
-      family_name: payload.family_name || "",
-    },
-  };
 };
 
 export const signInWithGoogle = async () => {
