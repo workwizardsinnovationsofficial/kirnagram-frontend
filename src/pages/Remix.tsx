@@ -55,6 +55,33 @@ type PromptVariable = {
   required?: boolean;
 };
 
+export const collectPromptImages = (prompt: Partial<PromptDetail> | null) => {
+  const orderedImages: string[] = [];
+
+  const addImage = (value?: string) => {
+    const candidate = (value || "").trim();
+    if (!candidate) return;
+    if (!orderedImages.includes(candidate)) orderedImages.push(candidate);
+  };
+
+  addImage(prompt?.image_url);
+  addImage(prompt?.sample_image_url);
+
+  if (Array.isArray(prompt?.sample_image_urls)) {
+    prompt.sample_image_urls.forEach((url) => addImage(url));
+  }
+
+  if (Array.isArray(prompt?.reference_correct_image_urls)) {
+    prompt.reference_correct_image_urls.forEach((url) => addImage(url));
+  }
+
+  if (Array.isArray(prompt?.reference_wrong_image_urls)) {
+    prompt.reference_wrong_image_urls.forEach((url) => addImage(url));
+  }
+
+  return orderedImages;
+};
+
 type RemixSourceState = {
   returnTo?: string;
   fromPostId?: string;
@@ -337,33 +364,16 @@ const Remix = () => {
   }, [promptId]);
 
   const promptInfo = useMemo(() => {
-    const orderedImages: string[] = [];
+    const orderedImages = collectPromptImages(prompt);
 
-    const addImage = (value?: string) => {
-      const candidate = (value || "").trim();
-      if (!candidate) return;
-      if (!orderedImages.includes(candidate)) orderedImages.push(candidate);
-    };
-
-    // Main sample image should always be prioritized first.
-    addImage(prompt?.image_url);
-    addImage(prompt?.sample_image_url);
-
-    if (Array.isArray(prompt?.sample_image_urls)) {
-      prompt.sample_image_urls.forEach((url) => addImage(url));
-    }
-
-    if (Array.isArray(prompt?.reference_correct_image_urls)) {
-      prompt.reference_correct_image_urls.forEach((url) => addImage(url));
-    }
-
-    if (!prompt) return { style: "", description: "", image: "" };
+    if (!prompt) return { style: "", description: "", image: "", images: [] as string[] };
     const rawDesc = prompt.prompt_description || prompt.description || "";
     const publicDesc = sanitizePublicDescription(rawDesc);
     return {
       style: prompt.style_name || "Prompt Style",
       description: publicDesc,
       image: orderedImages[0] || "",
+      images: orderedImages,
     };
   }, [prompt]);
 
@@ -646,6 +656,22 @@ const Remix = () => {
       {promptInfo.image ? (
         <div className="rounded-3xl border border-border/70 overflow-hidden">
           <img src={promptInfo.image} alt="Reference" className="w-full h-64 object-cover rounded-xl" />
+        </div>
+      ) : null}
+
+      {promptInfo.images.length > 1 ? (
+        <div className="rounded-3xl border border-border/70 bg-background/70 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-foreground">Reference images</p>
+            <span className="text-xs text-muted-foreground">{promptInfo.images.length} total</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {promptInfo.images.slice(1).map((imageUrl, index) => (
+              <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
+                <img src={imageUrl} alt={`Reference ${index + 1}`} className="h-24 w-full object-cover" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
