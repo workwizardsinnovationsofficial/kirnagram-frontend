@@ -67,19 +67,25 @@ const StoryUpload: React.FC = () => {
         if (!user) throw new Error('Authentication required');
         const token = await user.getIdToken();
 
-        // Use proxy to avoid CORS blocking for remote assets (image and video)
-        const proxyRes = await fetch(`${API_BASE}/posts/image-proxy?url=${encodeURIComponent(url)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (proxyRes.ok) {
-          response = proxyRes;
-        }
+        // Check if URL is a Base64 data URL (e.g., from Remix)
+        if (url.startsWith('data:image') || url.startsWith('data:video')) {
+          // Convert data URL directly to blob without using proxy
+          response = await fetch(url);
+        } else {
+          // Use proxy to avoid CORS blocking for remote HTTP/HTTPS assets
+          const proxyRes = await fetch(`${API_BASE}/posts/image-proxy?url=${encodeURIComponent(url)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (proxyRes.ok) {
+            response = proxyRes;
+          }
 
-        if (!response) {
-          try {
-            response = await fetch(url);
-          } catch {
-            response = null;
+          if (!response) {
+            try {
+              response = await fetch(url);
+            } catch {
+              response = null;
+            }
           }
         }
 
@@ -525,6 +531,11 @@ const StoryUpload: React.FC = () => {
 
       if (!fileToUpload && currentStory.preview) {
         try {
+          // Don't try to re-fetch data URLs through proxy - they should have been converted to files already
+          if (currentStory.preview.startsWith('data:')) {
+            throw new Error('Data URL should have been converted to File during loading');
+          }
+
           const token = await auth.currentUser?.getIdToken();
           const fetchUrl = `${API_BASE}/posts/image-proxy?url=${encodeURIComponent(currentStory.preview)}`;
           const res = await fetch(fetchUrl, {

@@ -82,19 +82,28 @@ const AddPostPage = () => {
         const token = await getAuthToken();
         if (!token) return;
         let response: Response | null = null;
-        const proxyRes = await fetch(
-          `${API_BASE}/posts/image-proxy?url=${encodeURIComponent(imageUrl)}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (proxyRes.ok) {
-          response = proxyRes;
+
+        // Check if URL is a Base64 data URL (e.g., from Remix)
+        if (imageUrl.startsWith('data:image') || imageUrl.startsWith('data:video')) {
+          // Convert data URL directly to blob without using proxy
+          response = await fetch(imageUrl);
         } else {
-          try {
-            response = await fetch(imageUrl);
-          } catch {
-            response = null;
+          // Use proxy to avoid CORS blocking for remote HTTP/HTTPS assets
+          const proxyRes = await fetch(
+            `${API_BASE}/posts/image-proxy?url=${encodeURIComponent(imageUrl)}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          if (proxyRes.ok) {
+            response = proxyRes;
+          } else {
+            try {
+              response = await fetch(imageUrl);
+            } catch {
+              response = null;
+            }
           }
         }
+
         if (!response || !response.ok) return;
 
         const blob = await response.blob();

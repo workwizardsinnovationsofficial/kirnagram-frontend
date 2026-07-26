@@ -13,7 +13,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
 import { useNotificationStore } from "@/store/notificationStore";
-import { Download, Image as ImageIcon, Sparkles, Upload, MessageCircle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Download, Image as ImageIcon, Sparkles, Upload, Send } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "https://api-r.kirnagram.com";
@@ -148,11 +148,9 @@ const Remix = () => {
   const [remixId, setRemixId] = useState<string | null>(null);
   const [resolvedModel, setResolvedModel] = useState<"chatgpt" | "gemini">("chatgpt");
   const [downloading, setDownloading] = useState(false);
-  const [reviewRating, setReviewRating] = useState<"good" | "bad" | "">("");
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewImprovement, setReviewImprovement] = useState("");
-  const [reviewData, setReviewData] = useState<{ review_rating?: string; review_comment?: string; review_improvement?: string } | null>(null);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [issueReport, setIssueReport] = useState("");
+  const [issueFeedback, setIssueFeedback] = useState<{ description: string; timestamp: string } | null>(null);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
   const [progressMessage, setProgressMessage] = useState<string>("Waiting to start remix...");
@@ -485,10 +483,8 @@ const Remix = () => {
       }
       const generatedRemixId = data.remix_id || null;
       setRemixId(generatedRemixId);
-      setReviewData(null);
-      setReviewRating("");
-      setReviewComment("");
-      setReviewImprovement("");
+      setIssueFeedback(null);
+      setIssueReport("");
 
 
       // 🔥 REFRESH PROMPT DATA (IMPORTANT)
@@ -596,79 +592,33 @@ const Remix = () => {
     handleBack();
   };
 
-  const handleSubmitReview = async (rating: "good" | "bad") => {
-    if (!remixId) return;
+  const handleReportIssue = async () => {
+    if (!issueReport.trim() || !remixId) return;
     try {
-      setReviewSubmitting(true);
+      setReportSubmitting(true);
       const user = auth.currentUser;
       if (!user) throw new Error("Not logged in");
       const token = await user.getIdToken();
 
-      const payload = {
-        review_rating: rating,
-        review_comment: reviewComment || "",
-        review_improvement: reviewImprovement || "",
-      };
+      const payload = new FormData();
+      payload.append("rating", "bad");
+      payload.append("improvement", issueReport.trim());
 
       const res = await fetch(`${REMIX_API_BASE}/remix/${remixId}/review`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to submit review");
-      }
-
-      setReviewData(payload);
-      setReviewRating("");
-      setReviewComment("");
-      setReviewImprovement("");
-
-      toast({
-        title: "Review submitted",
-        description: "Thank you for your feedback! This helps us improve.",
-      });
-    } catch (error) {
-      toast({
-        title: "Review failed",
-        description: error instanceof Error ? error.message : "Unable to submit review",
-        variant: "destructive",
-      });
-    } finally {
-      setReviewSubmitting(false);
-    }
-  };
-
-  const handleReportGlitch = async (issueDescription: string) => {
-    if (!remixId) return;
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Not logged in");
-      const token = await user.getIdToken();
-
-      const payload = {
-        remix_id: remixId,
-        issue_type: "quality_glitch",
-        description: issueDescription,
-        timestamp: new Date().toISOString(),
-      };
-
-      const res = await fetch(`${REMIX_API_BASE}/remix/${remixId}/report-issue`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       if (!res.ok) {
         throw new Error("Failed to report issue");
       }
+
+      const timestamp = new Date().toISOString();
+      setIssueFeedback({ description: issueReport, timestamp });
+      setIssueReport("");
 
       toast({
         title: "Issue reported",
@@ -680,13 +630,8 @@ const Remix = () => {
         description: error instanceof Error ? error.message : "Unable to report issue",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleOpenFeedbackDialog = () => {
-    const issue = window.prompt("Describe the issue with this remix generation:");
-    if (issue && issue.trim()) {
-      handleReportGlitch(issue.trim());
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -1216,48 +1161,35 @@ const Remix = () => {
                 </div>
 
                 <div className="border-t border-border/50 pt-4 space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Quality feedback</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Report an issue</p>
                   
-                  {reviewData ? (
-                    <div className="rounded-2xl bg-primary/10 border border-primary/30 p-3">
-                      <p className="text-sm text-primary font-medium">✓ Feedback received</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Rating: {reviewData.review_rating === "good" ? "👍 Good" : "👎 Needs improvement"}
-                      </p>
+                  {issueFeedback ? (
+                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-500/30 p-3">
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">✓ Issue reported</p>
+                      <p className="text-xs text-muted-foreground mt-1">{issueFeedback.description}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Describe what went wrong with the generation..."
+                        value={issueReport}
+                        onChange={(e) => setIssueReport(e.target.value)}
+                        maxLength={200}
+                        className="flex-1 px-3 py-2 rounded-lg border border-border/60 bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        disabled={reportSubmitting}
+                      />
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={() => handleSubmitReview("good")}
-                        disabled={reviewSubmitting}
-                        className="w-full text-xs"
+                        onClick={handleReportIssue}
+                        disabled={reportSubmitting || !issueReport.trim()}
+                        className="px-3"
                       >
-                        <ThumbsUp className="w-3 h-3 mr-1" />
-                        Good
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSubmitReview("bad")}
-                        disabled={reviewSubmitting}
-                        className="w-full text-xs"
-                      >
-                        <ThumbsDown className="w-3 h-3 mr-1" />
-                        Needs improvement
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleOpenFeedbackDialog}
-                        className="w-full text-xs"
-                      >
-                        <MessageCircle className="w-3 h-3 mr-1" />
-                        Report issue
+                        <Send className="w-3 h-3" />
                       </Button>
                     </div>
                   )}
+                  <p className="text-xs text-muted-foreground text-right">{issueReport.length}/200</p>
                 </div>
               </Card>
             )}
