@@ -55,13 +55,15 @@ type PromptVariable = {
   required?: boolean;
 };
 
-export const collectPromptImages = (prompt: Partial<PromptDetail> | null) => {
+export const collectPromptImageGroups = (prompt: Partial<PromptDetail> | null) => {
   const orderedImages: string[] = [];
+  const referenceCorrectImages: string[] = [];
+  const referenceWrongImages: string[] = [];
 
-  const addImage = (value?: string) => {
+  const addImage = (value?: string, container: string[] = orderedImages) => {
     const candidate = (value || "").trim();
     if (!candidate) return;
-    if (!orderedImages.includes(candidate)) orderedImages.push(candidate);
+    if (!container.includes(candidate)) container.push(candidate);
   };
 
   addImage(prompt?.image_url);
@@ -72,14 +74,24 @@ export const collectPromptImages = (prompt: Partial<PromptDetail> | null) => {
   }
 
   if (Array.isArray(prompt?.reference_correct_image_urls)) {
-    prompt.reference_correct_image_urls.forEach((url) => addImage(url));
+    prompt.reference_correct_image_urls.forEach((url) => {
+      addImage(url, referenceCorrectImages);
+      addImage(url);
+    });
   }
 
   if (Array.isArray(prompt?.reference_wrong_image_urls)) {
-    prompt.reference_wrong_image_urls.forEach((url) => addImage(url));
+    prompt.reference_wrong_image_urls.forEach((url) => {
+      addImage(url, referenceWrongImages);
+      addImage(url);
+    });
   }
 
-  return orderedImages;
+  return {
+    orderedImages,
+    referenceCorrectImages,
+    referenceWrongImages,
+  };
 };
 
 type RemixSourceState = {
@@ -364,9 +376,19 @@ const Remix = () => {
   }, [promptId]);
 
   const promptInfo = useMemo(() => {
-    const orderedImages = collectPromptImages(prompt);
+    const { orderedImages, referenceCorrectImages, referenceWrongImages } = collectPromptImageGroups(prompt);
 
-    if (!prompt) return { style: "", description: "", image: "", images: [] as string[] };
+    if (!prompt) {
+      return {
+        style: "",
+        description: "",
+        image: "",
+        images: [] as string[],
+        referenceCorrectImages: [] as string[],
+        referenceWrongImages: [] as string[],
+      };
+    }
+
     const rawDesc = prompt.prompt_description || prompt.description || "";
     const publicDesc = sanitizePublicDescription(rawDesc);
     return {
@@ -374,6 +396,8 @@ const Remix = () => {
       description: publicDesc,
       image: orderedImages[0] || "",
       images: orderedImages,
+      referenceCorrectImages,
+      referenceWrongImages,
     };
   }, [prompt]);
 
@@ -659,19 +683,38 @@ const Remix = () => {
         </div>
       ) : null}
 
-      {promptInfo.images.length > 1 ? (
-        <div className="rounded-3xl border border-border/70 bg-background/70 p-4 space-y-3">
+      {(promptInfo.referenceCorrectImages.length > 0 || promptInfo.referenceWrongImages.length > 0) ? (
+        <div className="space-y-3 rounded-3xl border border-border/70 bg-background/70 p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-foreground">Reference images</p>
-            <span className="text-xs text-muted-foreground">{promptInfo.images.length} total</span>
+            <p className="text-sm font-semibold text-foreground">Reference variants</p>
+            <span className="text-xs text-muted-foreground">Right / Wrong</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {promptInfo.images.slice(1).map((imageUrl, index) => (
-              <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-                <img src={imageUrl} alt={`Reference ${index + 1}`} className="h-24 w-full object-cover" />
+
+          {promptInfo.referenceCorrectImages.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Right images</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {promptInfo.referenceCorrectImages.map((imageUrl, index) => (
+                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
+                    <img src={imageUrl} alt={`Right reference ${index + 1}`} className="h-24 w-full object-cover" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : null}
+
+          {promptInfo.referenceWrongImages.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Wrong images</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {promptInfo.referenceWrongImages.map((imageUrl, index) => (
+                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
+                    <img src={imageUrl} alt={`Wrong reference ${index + 1}`} className="h-24 w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
