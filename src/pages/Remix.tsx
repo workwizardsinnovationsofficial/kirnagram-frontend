@@ -13,7 +13,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
 import { useNotificationStore } from "@/store/notificationStore";
-import { Download, Image as ImageIcon, Sparkles, Upload } from "lucide-react";
+import { Download, Image as ImageIcon, Sparkles, Upload, MessageCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "https://api-r.kirnagram.com";
@@ -485,6 +485,11 @@ const Remix = () => {
       }
       const generatedRemixId = data.remix_id || null;
       setRemixId(generatedRemixId);
+      setReviewData(null);
+      setReviewRating("");
+      setReviewComment("");
+      setReviewImprovement("");
+
 
       // 🔥 REFRESH PROMPT DATA (IMPORTANT)
       const updatedPromptRes = await fetchWithFreshToken(
@@ -591,11 +596,100 @@ const Remix = () => {
     handleBack();
   };
 
-  const handleViewNotification = () => {
-    if (remixId) {
-      navigate(`/remix-details/${remixId}`);
+  const handleSubmitReview = async (rating: "good" | "bad") => {
+    if (!remixId) return;
+    try {
+      setReviewSubmitting(true);
+      const user = auth.currentUser;
+      if (!user) throw new Error("Not logged in");
+      const token = await user.getIdToken();
+
+      const payload = {
+        review_rating: rating,
+        review_comment: reviewComment || "",
+        review_improvement: reviewImprovement || "",
+      };
+
+      const res = await fetch(`${REMIX_API_BASE}/remix/${remixId}/review`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit review");
+      }
+
+      setReviewData(payload);
+      setReviewRating("");
+      setReviewComment("");
+      setReviewImprovement("");
+
+      toast({
+        title: "Review submitted",
+        description: "Thank you for your feedback! This helps us improve.",
+      });
+    } catch (error) {
+      toast({
+        title: "Review failed",
+        description: error instanceof Error ? error.message : "Unable to submit review",
+        variant: "destructive",
+      });
+    } finally {
+      setReviewSubmitting(false);
     }
   };
+
+  const handleReportGlitch = async (issueDescription: string) => {
+    if (!remixId) return;
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Not logged in");
+      const token = await user.getIdToken();
+
+      const payload = {
+        remix_id: remixId,
+        issue_type: "quality_glitch",
+        description: issueDescription,
+        timestamp: new Date().toISOString(),
+      };
+
+      const res = await fetch(`${REMIX_API_BASE}/remix/${remixId}/report-issue`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to report issue");
+      }
+
+      toast({
+        title: "Issue reported",
+        description: "Thank you! Our team will review this in the next version.",
+      });
+    } catch (error) {
+      toast({
+        title: "Report failed",
+        description: error instanceof Error ? error.message : "Unable to report issue",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenFeedbackDialog = () => {
+    const issue = window.prompt("Describe the issue with this remix generation:");
+    if (issue && issue.trim()) {
+      handleReportGlitch(issue.trim());
+    }
+  };
+
 
   const handleGoToNotifications = () => {
     navigate("/notifications");
@@ -684,19 +778,17 @@ const Remix = () => {
       ) : null}
 
       {(promptInfo.referenceCorrectImages.length > 0 || promptInfo.referenceWrongImages.length > 0) ? (
-        <div className="space-y-3 rounded-3xl border border-border/70 bg-background/70 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-foreground">Reference variants</p>
-            <span className="text-xs text-muted-foreground">Right / Wrong</span>
-          </div>
-
+        <div className="space-y-3">
           {promptInfo.referenceCorrectImages.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Right images</p>
+            <div className="rounded-3xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">✓ Right Reference Images</p>
+                <span className="text-xs text-emerald-600 dark:text-emerald-500">{promptInfo.referenceCorrectImages.length} images</span>
+              </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {promptInfo.referenceCorrectImages.map((imageUrl, index) => (
-                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-                    <img src={imageUrl} alt={`Right reference ${index + 1}`} className="h-24 w-full object-cover" />
+                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-emerald-400 bg-white dark:bg-slate-900">
+                    <img src={imageUrl} alt={`Right reference ${index + 1}`} className="h-28 w-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -704,12 +796,15 @@ const Remix = () => {
           ) : null}
 
           {promptInfo.referenceWrongImages.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Wrong images</p>
+            <div className="rounded-3xl border-2 border-red-500 bg-red-50 dark:bg-red-950/20 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-red-700 dark:text-red-400">✗ Wrong Reference Images</p>
+                <span className="text-xs text-red-600 dark:text-red-500">{promptInfo.referenceWrongImages.length} images</span>
+              </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {promptInfo.referenceWrongImages.map((imageUrl, index) => (
-                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-                    <img src={imageUrl} alt={`Wrong reference ${index + 1}`} className="h-24 w-full object-cover" />
+                  <div key={`${imageUrl}-${index}`} className="overflow-hidden rounded-2xl border border-red-400 bg-white dark:bg-slate-900">
+                    <img src={imageUrl} alt={`Wrong reference ${index + 1}`} className="h-28 w-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -1118,6 +1213,51 @@ const Remix = () => {
                     <Download className="w-4 h-4 mr-2" />
                     {downloading ? "Downloading..." : "Download"}
                   </Button>
+                </div>
+
+                <div className="border-t border-border/50 pt-4 space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Quality feedback</p>
+                  
+                  {reviewData ? (
+                    <div className="rounded-2xl bg-primary/10 border border-primary/30 p-3">
+                      <p className="text-sm text-primary font-medium">✓ Feedback received</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Rating: {reviewData.review_rating === "good" ? "👍 Good" : "👎 Needs improvement"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSubmitReview("good")}
+                        disabled={reviewSubmitting}
+                        className="w-full text-xs"
+                      >
+                        <ThumbsUp className="w-3 h-3 mr-1" />
+                        Good
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSubmitReview("bad")}
+                        disabled={reviewSubmitting}
+                        className="w-full text-xs"
+                      >
+                        <ThumbsDown className="w-3 h-3 mr-1" />
+                        Needs improvement
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleOpenFeedbackDialog}
+                        className="w-full text-xs"
+                      >
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        Report issue
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             )}
