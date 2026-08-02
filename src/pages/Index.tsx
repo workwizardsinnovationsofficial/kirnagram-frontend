@@ -14,6 +14,7 @@ import { Send } from "lucide-react";
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
+import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import SuggestedUsers from "@/components/feed/SuggestedUsers";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
@@ -922,7 +923,12 @@ const Index = () => {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{getUserHandle(user)}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium truncate">{getUserHandle(user)}</p>
+                        {Boolean(user.is_creator) && (
+                          <img src={creatorLogo} alt="Creator" className="w-3.5 h-3.5 rounded-full object-contain" />
+                        )}
+                      </div>
                       {user.full_name && user.full_name !== user.username ? (
                         <p className="text-xs text-muted-foreground truncate">{user.full_name}</p>
                       ) : null}
@@ -960,7 +966,12 @@ const Index = () => {
                     className="w-9 h-9 rounded-full object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{getCommentAuthorHandle(comment, userProfiles)}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">{getCommentAuthorHandle(comment, userProfiles)}</p>
+                      {Boolean(userProfiles[comment.user_id]?.is_creator) && (
+                        <img src={creatorLogo} alt="Creator" className="w-3.5 h-3.5 rounded-full object-contain" />
+                      )}
+                    </div>
                     {userProfiles[comment.user_id]?.full_name ? (
                       <p className="text-xs text-muted-foreground truncate">{userProfiles[comment.user_id]?.full_name}</p>
                     ) : null}

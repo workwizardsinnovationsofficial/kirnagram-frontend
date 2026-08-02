@@ -10,6 +10,7 @@ import { ArrowLeft, Eye, Heart, MessageCircle, MoreVertical, Send, Share2, Trash
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
+import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import { Volume2, VolumeX } from "lucide-react";
 
 const API_BASE = "https://api.kirnagram.com";
@@ -720,9 +721,14 @@ useEffect(() => {
                             className="w-9 h-9 rounded-full object-cover ring-2 ring-primary/40"
                           />
                           <div className="text-left min-w-0">
-                            <p className="text-sm font-semibold truncate">
-                              {getDisplayName(userProfiles[post.user_id])}
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-semibold truncate">
+                                {getDisplayName(userProfiles[post.user_id])}
+                              </p>
+                              {Boolean(userProfiles[post.user_id]?.is_creator) && (
+                                <img src={creatorLogo} alt="Creator" className="w-3.5 h-3.5 rounded-full object-contain" />
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground truncate">
                               {getUserHandle(userProfiles[post.user_id])}
                             </p>
@@ -949,7 +955,12 @@ useEffect(() => {
                     className="w-9 h-9 rounded-full object-cover shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{getCommentAuthorName(comment, userProfiles)}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">{getCommentAuthorName(comment, userProfiles)}</p>
+                      {Boolean(userProfiles[comment.user_id]?.is_creator) && (
+                        <img src={creatorLogo} alt="Creator" className="w-3.5 h-3.5 rounded-full object-contain" />
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{getCommentAuthorHandle(comment, userProfiles)}</p>
                     <p className="text-sm text-muted-foreground break-words">{comment?.text || "No text"}</p>
                     {comment?.created_at && (
