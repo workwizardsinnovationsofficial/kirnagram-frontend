@@ -334,6 +334,11 @@ export function CreditsWalletPanel({ variant = "page" }: { variant?: "page" | "m
               ? `New users get ${summary?.welcome_bonus?.credits ?? 0} credits.`
               : "Welcome bonus is currently disabled."}
           </p>
+          {summary?.welcome_bonus?.enabled && summary?.welcome_bonus?.valid_days != null && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Valid for {summary.welcome_bonus.valid_days} day{summary.welcome_bonus.valid_days === 1 ? "" : "s"}.
+            </p>
+          )}
           <div className="mt-4 text-sm">
             <p className="text-muted-foreground">Claimed at</p>
             <p className="font-medium text-foreground">

@@ -30,7 +30,7 @@ import { auth } from "@/firebase";
 import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const FULL_NAME_COOLDOWN_DAYS = 14;
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
@@ -158,7 +158,7 @@ const EditProfile = (): JSX.Element => {
   const isPublicIdChanged = (formData.publicId || "").trim().toLowerCase() !== (initialPublicIdRef.current || "").trim().toLowerCase();
   const hasExistingEmail = Boolean((initialEmailRef.current || "").trim());
   const isNameChangeBlocked = isNameChanged && fullNameCooldownDays > 0;
-  const requiresOtp = isPhoneChanged;
+  const requiresOtp = false;
   const requiresEmailOtp = isEmailChanged;
   const isSaveDisabled =
     saving ||
@@ -171,13 +171,13 @@ const EditProfile = (): JSX.Element => {
   // 🔹 LOAD PROFILE
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      const token = await getAuthToken();
-      if (!token) {
+      if (!user) {
         setLoading(false);
         return;
       }
 
       try {
+        const token = await user.getIdToken();
 
         const res = await fetch(`${API_BASE}/profile/me`, {
           headers: {
@@ -430,14 +430,15 @@ const EditProfile = (): JSX.Element => {
     setUsernameMessage("Checking availability...");
 
     const timer = setTimeout(async () => {
-      const token = await getAuthToken();
-      if (!token) {
+      const user = auth.currentUser;
+      if (!user) {
         setUsernameStatus("error");
         setUsernameMessage("Please login again");
         return;
       }
 
       try {
+        const token = await user.getIdToken();
         const res = await fetch(
           `${API_BASE}/profile/username-availability?username=${encodeURIComponent(candidate)}`,
           {
@@ -475,8 +476,8 @@ const EditProfile = (): JSX.Element => {
   }, [formData.username]);
 
   const sendOtp = async () => {
-    const token = await getAuthToken();
-    if (!token) {
+    const user = auth.currentUser;
+    if (!user) {
       toast({ title: "Not authenticated", variant: "destructive" });
       return;
     }
@@ -501,6 +502,7 @@ const EditProfile = (): JSX.Element => {
       setSendingOtp(true);
       setOtpMessage("");
       setOtpMessageIsError(false);
+      const token = await user.getIdToken();
       const forceSend = isPhoneChanged || (isNameChanged && !isPhoneChanged);
       const res = await fetch(`${API_BASE}/send-otp`, {
         method: "POST",
@@ -578,8 +580,8 @@ const EditProfile = (): JSX.Element => {
       return;
     }
 
-    const token = await getAuthToken();
-    if (!token) {
+    const user = auth.currentUser;
+    if (!user) {
       toast({ title: "Not authenticated", variant: "destructive" });
       return;
     }
@@ -589,6 +591,7 @@ const EditProfile = (): JSX.Element => {
       setEmailOtpMessage("");
       setEmailOtpMessageIsError(false);
 
+      const token = await user.getIdToken();
       const res = await fetch(`${API_BASE}/profile/send-email-otp`, {
         method: "POST",
         headers: {
@@ -638,11 +641,12 @@ const EditProfile = (): JSX.Element => {
 
     try {
       setEmailVerifyingOtp(true);
-      const token = await getAuthToken();
-      if (!token) {
+      const user = auth.currentUser;
+      if (!user) {
         toast({ title: "Not authenticated", variant: "destructive" });
         return;
       }
+      const token = await user.getIdToken();
       const res = await fetch(`${API_BASE}/profile/verify-email-otp`, {
         method: "POST",
         headers: {
@@ -682,8 +686,8 @@ const EditProfile = (): JSX.Element => {
   };
 
   const verifyOtp = async () => {
-    const token = await getAuthToken();
-    if (!token) {
+    const user = auth.currentUser;
+    if (!user) {
       toast({ title: "Not authenticated", variant: "destructive" });
       return;
     }
@@ -695,6 +699,7 @@ const EditProfile = (): JSX.Element => {
 
     try {
       setVerifyingOtp(true);
+      const token = await user.getIdToken();
       const bodyMobile = otpTargetMobile || normalizePhone(formData.phone);
       const res = await fetch(`${API_BASE}/verify-otp`, {
         method: "POST",
@@ -995,7 +1000,13 @@ const EditProfile = (): JSX.Element => {
           }
 
           // 🔹 SAVE TO DATABASE IMMEDIATELY (skip notification)
-          const token = await getAuthToken();
+          let token = localStorage.getItem("access_token");
+          if (!token) {
+            const user = auth.currentUser;
+            if (user) {
+              token = await user.getIdToken();
+            }
+          }
 
           if (token) {
             try {
@@ -1061,8 +1072,12 @@ const EditProfile = (): JSX.Element => {
 
   // 🔹 REMOVE AVATAR (reset to gender/default icon)
   const handleRemoveAvatar = async () => {
-    const token = await getAuthToken();
-    if (!token) return;
+    let token = localStorage.getItem("access_token");
+    if (!token) {
+      const user = auth.currentUser;
+      if (!user) return;
+      token = await user.getIdToken();
+    }
 
     try {
       const res = await fetch(`${API_BASE}/profile/update`, {
@@ -1091,8 +1106,12 @@ const EditProfile = (): JSX.Element => {
 
   // 🔹 REMOVE COVER
   const handleRemoveCover = async () => {
-    const token = await getAuthToken();
-    if (!token) return;
+    let token = localStorage.getItem("access_token");
+    if (!token) {
+      const user = auth.currentUser;
+      if (!user) return;
+      token = await user.getIdToken();
+    }
 
     try {
       const res = await fetch(`${API_BASE}/profile/update`, {
@@ -1122,8 +1141,12 @@ const EditProfile = (): JSX.Element => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const token = await getAuthToken();
-    if (!token) return;
+    let token = localStorage.getItem("access_token");
+    if (!token) {
+      const user = auth.currentUser;
+      if (!user) return;
+      token = await user.getIdToken();
+    }
 
     setSaving(true);
 

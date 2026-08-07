@@ -577,26 +577,6 @@ const Explore = () => {
               />
             </div>
           </div>
-          {topTags.length > 0 && !searchQuery.trim() && (
-            <div className="mt-3 sm:mt-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Popular hashtags</p>
-                <span className="text-xs text-muted-foreground">{topTags.length} tags</span>
-              </div>
-              <div className="mt-2 sm:mt-3 w-full flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap pb-1 sm:pb-2 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {topTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => handleSearch(`#${tag}`)}
-                    className="flex-shrink-0 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:border-primary/70 hover:bg-primary/5"
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
         
 </div>

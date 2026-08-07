@@ -27,7 +27,7 @@ const creatorLandingBenefits = [
   { icon: Heart, title: "Priority Support", description: "Faster help for active AI creators." },
 ];
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
 const AICreator = () => {
@@ -97,14 +97,12 @@ const AICreator = () => {
 
     // Fallback: if Firebase auth has a verified phone number matching the current profile value,
     // treat that as a verified mobile path for creator eligibility.
-    const firebasePhone = auth.currentUser?.phoneNumber;
+    const firebasePhone = (auth.currentUser as { phoneNumber?: string } | null)?.phoneNumber;
     if (firebasePhone && normalizeMobile(firebasePhone) === currentMobile) {
       return true;
     }
 
-    // Legacy accounts may not have mobile verification metadata stored,
-    // but still have a confirmed mobile from existing onboarding flows.
-    return true;
+    return false;
   };
 
   const profileBlockedMessage = !loading && profile && !isApproved && (!isProfileComplete(profile) || !hasVerifiedMobile(profile));

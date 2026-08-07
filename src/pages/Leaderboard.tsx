@@ -19,7 +19,7 @@ type UserSummary = {
   total_remix_count?: number;
 };
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname) ? "http://localhost:8000" : "https://api.kirnagram.com");
 
 const getDisplayName = (user: UserSummary) => {
   return user.full_name || user.username || user.public_id || "Creator";
