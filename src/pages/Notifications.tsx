@@ -328,12 +328,14 @@ const Notifications = () => {
               const isAdPaymentVerified = notif.action === "ad_payment_verified";
               const isCreditSettingsUpdated = notif.action === "credit_settings_updated";
               const isPaymentNotification = isCreditsBurned || isCreditsPurchased || isAdPaymentVerified || isCreditSettingsUpdated;
+              const isAdminCreatorBonus = notif.action === "admin_creator_bonus" || notif.type === "admin_creator_bonus";
               const isProfileUpdated = notif.action === "profile_updated";
               const isSystemNotification =
                 isPayoutChange ||
                 isAiCreatorStatus ||
                 isAiCreatorPromptDecision ||
                 isPaymentNotification ||
+                isAdminCreatorBonus ||
                 isProfileUpdated ||
                 !notif.from_user_name;
               const displayDescription =
@@ -442,6 +444,14 @@ const Notifications = () => {
                               className="mt-0.5 text-[11px] text-primary hover:underline"
                             >
                               {isExpanded ? "Show less" : "Show full message"}
+                            </button>
+                          )}
+                          {isAdminCreatorBonus && (
+                            <button
+                              onClick={() => navigate("/ai-creator/earnings")}
+                              className="mt-1 text-xs text-primary hover:underline"
+                            >
+                              View bonus history
                             </button>
                           )}
                           {isPaymentNotification && (isCreditsPurchased || isAdPaymentVerified || isCreditsBurned) && (

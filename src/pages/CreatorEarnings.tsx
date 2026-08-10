@@ -2,10 +2,11 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ArrowLeft, TrendingUp, Users, IndianRupee, Eye, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { auth } from "@/firebase";
+import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
+import { fetchPaymentHistory, type PaymentTransaction } from "@/lib/paymentApi";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
@@ -21,18 +22,20 @@ const CreatorEarnings = () => {
   const [amount, setAmount] = useState(100);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [totalMoneyBonus, setTotalMoneyBonus] = useState(0);
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [summaryRemixCount, setSummaryRemixCount] = useState(0);
   const [minWithdraw, setMinWithdraw] = useState(100);
   const [withdrawHistory, setWithdrawHistory] = useState<any[]>([]);
+  const [bonusTransactions, setBonusTransactions] = useState<PaymentTransaction[]>([]);
+  const [showAllBonusHistory, setShowAllBonusHistory] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<"all" | "pending" | "approved" | "paid" | "rejected">("all");
 
   const fetchPrompts = async () => {
     try {
       setLoading(true);
-      const user = auth.currentUser;
-      if (!user) throw new Error("Not logged in");
-      const token = await user.getIdToken();
+      const token = await getAuthToken();
+      if (!token) throw new Error("Not logged in");
 
       // 1️⃣ Get prompts
       const res = await fetch(`${API_BASE}/ai-creator/prompts/me?status=all`, {
@@ -58,6 +61,7 @@ const CreatorEarnings = () => {
       if (earningsRes.ok) {
         const earningsData = await earningsRes.json();
         setTotalEarnings(earningsData.totalEarnings || 0);
+        setTotalMoneyBonus(earningsData.totalMoneyBonus || 0);
         setTotalWithdrawn(earningsData.totalWithdrawn || 0);
         setSummaryRemixCount(earningsData.totalRemixes || 0);
         setMinWithdraw(Number(earningsData.minWithdrawAmount ?? 100) || 100);
@@ -70,6 +74,15 @@ const CreatorEarnings = () => {
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         setWithdrawHistory(historyData.history || []);
+      }
+
+      // 5️⃣ Get bonus and payment history for creator bonuses
+      try {
+        const paymentHistory = await fetchPaymentHistory();
+        const bonusTxs = paymentHistory.transactions.filter((tx) => tx.category === "money" || tx.type === "Admin Money Bonus");
+        setBonusTransactions(bonusTxs);
+      } catch (paymentError) {
+        console.warn("Failed to load bonus history:", paymentError);
       }
     } catch (e: any) {
       toast({
@@ -94,7 +107,9 @@ const CreatorEarnings = () => {
       : remixes.filter(r => promptIds.has(r.prompt_id || r.promptId)).length;
   const uniquePrompts = new Set(remixes.map(r => r.prompt_id)).size;
   const totalViews = prompts.reduce((s, p) => s + (p.views?.length || 0), 0);
-  const availableBalance = Math.max(0, totalEarnings - totalWithdrawn);
+  const remixEarnings = remixes.reduce((sum, remix) => sum + Number(remix?.payout_per_remix ?? 1), 0);
+  const displayedTotalEarnings = Math.max(totalEarnings, remixEarnings + totalMoneyBonus);
+  const availableBalance = Math.max(0, displayedTotalEarnings - totalWithdrawn);
   const canWithdraw = availableBalance >= minWithdraw;
   const quickAmounts = [25, 50, 100]
     .map((pct) => Math.floor((availableBalance * pct) / 100))
@@ -109,6 +124,7 @@ const CreatorEarnings = () => {
     paid: normalizedHistory.filter((item) => item.status === "paid").length,
     rejected: normalizedHistory.filter((item) => item.status === "rejected").length,
   };
+  const displayedBonusTransactions = showAllBonusHistory ? bonusTransactions : bonusTransactions.slice(0, 3);
   const filteredHistory =
     historyFilter === "all"
       ? normalizedHistory
@@ -154,8 +170,13 @@ const CreatorEarnings = () => {
             <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
             <p className="text-2xl md:text-3xl font-bold text-green-500">₹{availableBalance}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Lifetime Earnings: ₹{totalEarnings}
+              Total earnings (remix + bonus): ₹{displayedTotalEarnings}
             </p>
+            {totalMoneyBonus > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Bonus money: ₹{totalMoneyBonus}
+              </p>
+            )}
             <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
               <TrendingUp className="w-3 h-3" /> {totalRemixes} remixes
             </p>
@@ -311,10 +332,8 @@ const CreatorEarnings = () => {
                       return;
                     }
                     try {
-                      const user = auth.currentUser;
-                      if (!user) return;
-
-                      const token = await user.getIdToken();
+                      const token = await getAuthToken();
+                      if (!token) return;
 
                       const res = await fetch(`${API_BASE}/withdraw/request`, {
                         method: "POST",
@@ -453,6 +472,54 @@ const CreatorEarnings = () => {
                 );
               })}
             </div>
+          )}
+        </div>
+
+        {/* Bonus History */}
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-semibold">Bonus History</h2>
+              <p className="text-xs text-muted-foreground">Admin bonuses applied to your creator account.</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">Total bonus</p>
+              <p className="text-sm font-semibold">₹{totalMoneyBonus}</p>
+            </div>
+          </div>
+          {bonusTransactions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No bonus history available yet.</p>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {displayedBonusTransactions.map((bonus) => {
+                  const date = bonus.timestamp ? new Date(bonus.timestamp) : null;
+                  const dateStr = date
+                    ? date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                    : "";
+                  return (
+                    <div key={bonus.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+                      <div>
+                        <p className="font-medium">{bonus.description}</p>
+                        <p className="text-xs text-muted-foreground">{dateStr}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-green-500">+₹{bonus.amount}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              {bonusTransactions.length > 3 && (
+                <div className="mt-4 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllBonusHistory((value) => !value)}
+                    className="text-sm font-medium text-primary hover:text-primary/80"
+                  >
+                    {showAllBonusHistory ? "Show less" : `Show all (${bonusTransactions.length})`}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 

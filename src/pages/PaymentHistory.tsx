@@ -17,7 +17,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { fetchPaymentHistory, type PaymentHistory } from "@/lib/paymentApi";
 import { useToast } from "@/hooks/use-toast";
 
-type FilterType = "all" | "credits" | "ads" | "withdrawals";
+type FilterType = "all" | "credits" | "ads" | "withdrawals" | "money";
 
 const PaymentHistory = () => {
   const navigate = useNavigate();
@@ -117,6 +117,8 @@ const PaymentHistory = () => {
         return { bg: "bg-blue-500/20", icon: "text-blue-400", text: "text-blue-400" };
       case "withdrawals":
         return { bg: "bg-green-500/20", icon: "text-green-400", text: "text-green-400" };
+      case "money":
+        return { bg: "bg-emerald-500/20", icon: "text-emerald-400", text: "text-emerald-400" };
       default:
         return { bg: "bg-gray-500/20", icon: "text-gray-400", text: "text-gray-400" };
     }
@@ -168,7 +170,7 @@ const PaymentHistory = () => {
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {["all", "credits", "ads", "withdrawals"].map((f) => (
+          {["all", "credits", "ads", "withdrawals", "money"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as FilterType)}
@@ -178,7 +180,7 @@ const PaymentHistory = () => {
                   : "bg-muted/40 text-foreground hover:bg-muted/60 border border-border"
               }`}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "money" ? "Bonus" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
         </div>

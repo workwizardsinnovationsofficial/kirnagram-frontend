@@ -209,11 +209,14 @@ const AICreator = () => {
 
   // --- Earnings logic: use API totalEarnings (not calculated from prompts) ---
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [totalMoneyBonus, setTotalMoneyBonus] = useState(0);
   const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [remixes, setRemixes] = useState<any[]>([]);
   const [summaryRemixCount, setSummaryRemixCount] = useState(0);
   const totalRemixes = summaryRemixCount > 0 ? summaryRemixCount : remixes.length;
-  const availableBalance = Math.max(0, totalEarnings - totalWithdrawn);
+  const remixEarnings = remixes.reduce((sum, remix) => sum + Number(remix?.payout_per_remix ?? 1), 0);
+  const displayedTotalEarnings = Math.max(totalEarnings, remixEarnings + totalMoneyBonus);
+  const availableBalance = Math.max(0, displayedTotalEarnings - totalWithdrawn);
 
   useEffect(() => {
     const fetchEarningsData = async () => {
@@ -235,6 +238,7 @@ const AICreator = () => {
         if (res.ok) {
           const data = await res.json();
           setTotalEarnings(data.totalEarnings || 0);
+          setTotalMoneyBonus(data.totalMoneyBonus || 0);
           setTotalWithdrawn(data.totalWithdrawn || 0);
           setSummaryRemixCount(data.totalRemixes || 0);
         }
@@ -636,6 +640,14 @@ const AICreator = () => {
                 <div className="inline-block p-3 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
                   <p className="text-xs text-muted-foreground mb-1 text-right">Available Balance</p>
                   <p className="text-lg sm:text-xl font-display font-bold text-green-500 text-right">₹{availableBalance}</p>
+                  <p className="text-[11px] text-muted-foreground mt-2 text-right">
+                    Total earnings (remix + bonus): ₹{displayedTotalEarnings}
+                  </p>
+                  {totalMoneyBonus > 0 && (
+                    <p className="text-[11px] text-muted-foreground text-right">
+                      Bonus money: ₹{totalMoneyBonus}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

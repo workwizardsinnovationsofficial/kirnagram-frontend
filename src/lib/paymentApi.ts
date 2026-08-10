@@ -1,11 +1,11 @@
-import { auth } from "@/firebase";
+import { getAuthToken } from "@/lib/auth-utils";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 export type PaymentTransaction = {
   id: string;
   type: string;
-  category: "credits" | "ads" | "withdrawals";
+  category: "credits" | "ads" | "withdrawals" | "money";
   amount: number;
   timestamp: string;
   status: "completed" | "pending" | "approved" | "paid" | "rejected";
@@ -25,9 +25,9 @@ export type PaymentHistory = {
 };
 
 const getToken = async () => {
-  const user = auth.currentUser;
-  if (!user) throw new Error("User not authenticated");
-  return user.getIdToken();
+  const token = await getAuthToken();
+  if (!token) throw new Error("User not authenticated");
+  return token;
 };
 
 export const fetchPaymentHistory = async (): Promise<PaymentHistory> => {
