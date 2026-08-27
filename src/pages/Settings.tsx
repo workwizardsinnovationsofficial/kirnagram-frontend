@@ -42,7 +42,7 @@ const Settings = () => {
       if (!user) return;
       try {
         const token = await user.getIdToken();
-        const res = await fetch("http://127.0.0.1:8000/profile/me", {
+        const res = await fetch("https://api.kirnagram.comprofile/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -81,7 +81,7 @@ const Settings = () => {
 
       const nextValue = !isPrivateAccount;
       const token = await user.getIdToken();
-      const res = await fetch("http://127.0.0.1:8000/profile/update", {
+      const res = await fetch("https://api.kirnagram.comprofile/update", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -128,7 +128,7 @@ const Settings = () => {
           toggle: true,
           checked: isPrivateAccount,
           onChange: togglePrivacy,
-          description: isPrivateAccount 
+          description: isPrivateAccount
             ? t('settings.privateAccountOn')
             : t('settings.privateAccountOff'),
         },
@@ -252,7 +252,7 @@ const Settings = () => {
           </button>
           <h1 className="text-xl font-display font-bold">{t('settings.title')}</h1>
         </div>
-        
+
         {/* Main Settings Sections (Account, Privacy, Preferences, Features) */}
         {settingsSections.map((section) => (
           <div key={section.title} className="py-3">
@@ -277,14 +277,12 @@ const Settings = () => {
                         </div>
                       </div>
                       <div
-                        className={`w-11 h-6 rounded-full transition-colors ${
-                          item.checked ? "bg-primary" : "bg-muted"
-                        } relative flex-shrink-0`}
+                        className={`w-11 h-6 rounded-full transition-colors ${item.checked ? "bg-primary" : "bg-muted"
+                          } relative flex-shrink-0`}
                       >
                         <div
-                          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                            item.checked ? "translate-x-5" : "translate-x-0.5"
-                          }`}
+                          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${item.checked ? "translate-x-5" : "translate-x-0.5"
+                            }`}
                         />
                       </div>
                     </button>

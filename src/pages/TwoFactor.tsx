@@ -23,7 +23,7 @@ const TwoFactor = () => {
       setEmail(user.email || "");
 
       const token = await user.getIdToken();
-      const res = await fetch("http://127.0.0.1:8000/profile/me", {
+      const res = await fetch("https://api.kirnagram.comprofile/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -43,7 +43,7 @@ const TwoFactor = () => {
 
     const token = await user.getIdToken();
 
-    await fetch("http://127.0.0.1:8000/2fa/request", {
+    await fetch("https://api.kirnagram.com2fa/request", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -69,8 +69,8 @@ const TwoFactor = () => {
 
       const endpoint =
         actionType === "enable"
-          ? "http://127.0.0.1:8000/2fa/verify"
-          : "http://127.0.0.1:8000/2fa/disable";
+          ? "https://api.kirnagram.com2fa/verify"
+          : "https://api.kirnagram.com2fa/disable";
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -130,14 +130,12 @@ const TwoFactor = () => {
                   ? requestOtp("disable")
                   : requestOtp("enable")
               }
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition ${
-                twoFAEnabled ? "bg-orange-500" : "bg-gray-600"
-              }`}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition ${twoFAEnabled ? "bg-orange-500" : "bg-gray-600"
+                }`}
             >
               <div
-                className={`bg-white w-4 h-4 rounded-full transform transition ${
-                  twoFAEnabled ? "translate-x-6" : ""
-                }`}
+                className={`bg-white w-4 h-4 rounded-full transform transition ${twoFAEnabled ? "translate-x-6" : ""
+                  }`}
               />
             </button>
           </div>
