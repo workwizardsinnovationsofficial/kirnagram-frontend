@@ -13,7 +13,7 @@ import { ArrowLeft, ArrowRight, Crop, ImagePlus, Loader2, Plus, Send, Sparkles, 
 import { useLocation, useNavigate } from "react-router-dom";
 import { resolveUploadRatio, type CropRatioOption } from "@/lib/cropImage";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 const AddPostPage = () => {
   const navigate = useNavigate();

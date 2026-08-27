@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -666,47 +666,67 @@ const SignupNew = () => {
 
           {/* STEP 1: Full Name Input */}
           {step === "name_input" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleNameNext();
-              }}
-              className="space-y-4"
-            >
-              <div className="bg-gradient-to-br from-orange-50/50 via-white to-white dark:from-zinc-900/80 dark:via-zinc-950 dark:to-zinc-950 border-2 border-orange-200/60 dark:border-orange-500/40 rounded-2xl p-7 space-y-4 shadow-lg shadow-orange-200/10 dark:shadow-xl dark:shadow-orange-950/20">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-gray-900 dark:text-white font-bold text-sm">1</div>
-                  <label className="text-sm font-bold text-orange-300 uppercase tracking-widest">Full Name</label>
-                </div>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full px-5 py-4 bg-orange-50/30 dark:bg-white dark:bg-zinc-950/70 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/40 focus:outline-none transition text-lg font-medium"
-                  autoFocus
-                />
-                <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium">We will use this to personalize your profile.</p>
-              </div>
-
+            <div className="space-y-4">
               <button
                 type="button"
                 onClick={handleContinueWithGoogle}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 border border-zinc-300 bg-white/90 hover:bg-zinc-50 text-gray-900 font-semibold py-3 rounded-xl transition duration-200 shadow-sm"
+                className="w-full flex items-center justify-center gap-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/90 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-900 dark:text-white font-semibold py-3.5 rounded-xl transition duration-200 shadow-sm disabled:opacity-50"
               >
                 <GoogleIcon />
                 {loading ? "Loading..." : "Continue with Google"}
               </button>
 
-              <button
-                type="submit"
-                disabled={!fullName.trim()}
-                className="w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-bold py-4 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 text-lg"
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-300 dark:border-zinc-800" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-[#fffdf8] dark:bg-[#0b0b0b] px-3 text-zinc-500 dark:text-zinc-400 font-medium tracking-wider">
+                    or continue with
+                  </span>
+                </div>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleNameNext();
+                }}
+                className="space-y-4"
               >
-                Continue <ArrowRight className="w-5 h-5" />
-              </button>
-            </form>
+                <div className="bg-gradient-to-br from-orange-50/50 via-white to-white dark:from-zinc-900/80 dark:via-zinc-950 dark:to-zinc-950 border-2 border-orange-200/60 dark:border-orange-500/40 rounded-2xl p-7 space-y-4 shadow-lg shadow-orange-200/10 dark:shadow-xl dark:shadow-orange-950/20">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-gray-900 dark:text-white font-bold text-sm">1</div>
+                    <label className="text-sm font-bold text-orange-300 uppercase tracking-widest">Full Name</label>
+                  </div>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full px-5 py-4 bg-orange-50/30 dark:bg-zinc-950/70 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-zinc-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/40 focus:outline-none transition text-lg font-medium"
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">We will use this to personalize your profile.</p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!fullName.trim()}
+                  className="w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white font-bold py-4 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 text-lg"
+                >
+                  Continue <ArrowRight className="w-5 h-5" />
+                </button>
+              </form>
+
+              <div className="text-center text-gray-600 dark:text-gray-400 text-sm">
+                Already have an account?{" "}
+                <Link to="/login" className="text-orange-500 hover:text-orange-400 font-semibold">
+                  Sign in
+                </Link>
+              </div>
+            </div>
           )}
 
           {/* STEP 2: Mobile Number Input */}

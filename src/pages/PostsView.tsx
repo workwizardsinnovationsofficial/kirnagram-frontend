@@ -13,7 +13,7 @@ import profileIcon from "@/assets/profileicon.png";
 import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import { Volume2, VolumeX } from "lucide-react";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 type Post = {
   _id: string;

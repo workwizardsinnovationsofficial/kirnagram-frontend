@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 type LoginStep = "email_mobile_input" | "password_entry" | "forgot_password_email_mobile" | "forgot_password_otp" | "reset_password_entry";
 
@@ -517,6 +517,27 @@ const Login = () => {
           {/* STEP 1: Email/Mobile Input */}
           {step === "email_mobile_input" && (
             <div className="space-y-4">
+              <button
+                type="button"
+                onClick={handleContinueWithGoogle}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/90 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 text-zinc-900 dark:text-white font-semibold py-3 rounded-lg transition duration-200 shadow-sm disabled:opacity-50"
+              >
+                <GoogleIcon />
+                {loading ? "Loading..." : "Continue with Google"}
+              </button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-300 dark:border-zinc-800" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-[#fffdf8] dark:bg-[#0b0b0b] px-3 text-zinc-500 dark:text-zinc-400 font-medium tracking-wider">
+                    or continue with
+                  </span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
                   Email or Mobile Number
@@ -529,20 +550,10 @@ const Login = () => {
                     detectEmailOrMobile(e.target.value);
                   }}
                   placeholder="you@example.com or 9876543210"
-                  className="w-full px-4 py-3 bg-white/95 dark:bg-white dark:bg-zinc-950/95 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-zinc-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition"
+                  className="w-full px-4 py-3 bg-white/95 dark:bg-zinc-950/95 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-zinc-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition"
                   onKeyPress={(e) => e.key === "Enter" && handleNextFromEmailMobile()}
                 />
               </div>
-
-              <button
-                type="button"
-                onClick={handleContinueWithGoogle}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 border border-zinc-300 bg-white/90 hover:bg-zinc-50 text-gray-900 font-semibold py-3 rounded-lg transition duration-200 shadow-sm"
-              >
-                <GoogleIcon />
-                {loading ? "Loading..." : "Continue with Google"}
-              </button>
 
               <button
                 onClick={handleNextFromEmailMobile}
@@ -552,7 +563,7 @@ const Login = () => {
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <div className="text-center text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm">
+              <div className="text-center text-gray-600 dark:text-gray-400 text-sm">
                 Don't have an account?{" "}
                 <Link to="/signup" className="text-orange-500 hover:text-orange-400 font-semibold">
                   Sign up

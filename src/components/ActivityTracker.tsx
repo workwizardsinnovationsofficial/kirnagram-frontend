@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { auth } from "@/firebase";
 import { getAuthToken } from "@/lib/auth-utils";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
 async function pingActivity() {
   const token = await getAuthToken();

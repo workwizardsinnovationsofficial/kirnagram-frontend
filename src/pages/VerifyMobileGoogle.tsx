@@ -4,7 +4,7 @@ import { Smartphone, ArrowRight, Loader, CheckCircle } from "lucide-react";
 import kirnagramLogoText from "@/assets/kirnagram@2.png";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 const VerifyMobileGoogle = () => {
   const navigate = useNavigate();

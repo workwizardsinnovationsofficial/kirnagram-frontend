@@ -134,7 +134,7 @@ const hydrateAuthFromStorage = () => {
 
 hydrateAuthFromStorage();
 
-const API_BASE = "https://api.kirnagram.com";
+const API_BASE = "http://127.0.0.1:8000";
 
 const decodeJwtPayload = (token: string) => {
   const segments = token.split(".");

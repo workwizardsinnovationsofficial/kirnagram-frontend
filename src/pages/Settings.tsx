@@ -14,12 +14,20 @@ import {
   CreditCard,
   Users,
   UserPlus,
+  Briefcase,
+  Mail,
+  Sparkles,
+  Award,
+  Scale,
+  Palette,
+  Cookie,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/firebase";
+import { legalDocuments } from "@/config/legalDocuments";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -34,7 +42,7 @@ const Settings = () => {
       if (!user) return;
       try {
         const token = await user.getIdToken();
-        const res = await fetch("https://api.kirnagram.com/profile/me", {
+        const res = await fetch("http://127.0.0.1:8000/profile/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -73,7 +81,7 @@ const Settings = () => {
 
       const nextValue = !isPrivateAccount;
       const token = await user.getIdToken();
-      const res = await fetch("https://api.kirnagram.com/profile/update", {
+      const res = await fetch("http://127.0.0.1:8000/profile/update", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,13 +153,87 @@ const Settings = () => {
         { icon: UserPlus, label: t('nav.becomePublisher'), link: "/become-publisher" },
       ],
     },
+  ];
+
+  const supportGroups = [
     {
-      title: t('settings.support'),
+      subtitle: "COMPANY",
       items: [
-        { icon: Building2, label: "About Kirnagram", link: "/about-kirnagram" },
-        { icon: HelpCircle, label: t('settings.helpCenter'), link: "/HelpCenter" },
-        { icon: FileText, label: t('settings.termsOfService'), link: "/terms" },
-        { icon: FileText, label: t('settings.privacyPolicy'), link: "/privacy" },
+        {
+          icon: Building2,
+          label: legalDocuments.about.title,
+          externalUrl: legalDocuments.about.pdfUrl,
+        },
+        {
+          icon: Briefcase,
+          label: legalDocuments.careers.title,
+          externalUrl: legalDocuments.careers.pdfUrl,
+        },
+      ],
+    },
+    {
+      subtitle: "SUPPORT",
+      items: [
+        {
+          icon: HelpCircle,
+          label: legalDocuments.helpCenter.title,
+          externalUrl: legalDocuments.helpCenter.pdfUrl,
+        },
+        {
+          icon: Mail,
+          label: legalDocuments.contact.title,
+          externalUrl: legalDocuments.contact.pdfUrl,
+        },
+      ],
+    },
+    {
+      subtitle: "LEGAL",
+      items: [
+        {
+          icon: FileText,
+          label: legalDocuments.terms.title,
+          externalUrl: legalDocuments.terms.pdfUrl,
+        },
+        {
+          icon: FileText,
+          label: legalDocuments.privacy.title,
+          externalUrl: legalDocuments.privacy.pdfUrl,
+        },
+        {
+          icon: FileText,
+          label: legalDocuments.community.title,
+          externalUrl: legalDocuments.community.pdfUrl,
+        },
+        {
+          icon: Sparkles,
+          label: legalDocuments.aiCreator.title,
+          externalUrl: legalDocuments.aiCreator.pdfUrl,
+        },
+        {
+          icon: Award,
+          label: legalDocuments.creatorRewards.title,
+          externalUrl: legalDocuments.creatorRewards.pdfUrl,
+        },
+        {
+          icon: CreditCard,
+          label: legalDocuments.refundsCredits.title,
+          externalUrl: legalDocuments.refundsCredits.pdfUrl,
+        },
+        {
+          icon: Scale,
+          label: legalDocuments.dmca.title,
+          externalUrl: legalDocuments.dmca.pdfUrl,
+        },
+        {
+          icon: Palette,
+          label: legalDocuments.brandGuidelines.title,
+          externalUrl: legalDocuments.brandGuidelines.pdfUrl,
+        },
+        {
+          icon: Cookie,
+          label: legalDocuments.cookies.title,
+          externalUrl: legalDocuments.cookies.pdfUrl,
+        },
       ],
     },
   ];
@@ -171,6 +253,7 @@ const Settings = () => {
           <h1 className="text-xl font-display font-bold">{t('settings.title')}</h1>
         </div>
         
+        {/* Main Settings Sections (Account, Privacy, Preferences, Features) */}
         {settingsSections.map((section) => (
           <div key={section.title} className="py-3">
             <h2 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -230,6 +313,47 @@ const Settings = () => {
             </div>
           </div>
         ))}
+
+        {/* Extended SUPPORT Section with sub-groups COMPANY, SUPPORT, LEGAL */}
+        <div className="py-3">
+          <h2 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            {t('settings.support') || "SUPPORT"}
+          </h2>
+          <div className="space-y-4">
+            {supportGroups.map((group) => (
+              <div key={group.subtitle}>
+                <h3 className="px-2 text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-wider mb-1.5">
+                  {group.subtitle}
+                </h3>
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  {group.items.map((item, index) => (
+                    <div key={item.label}>
+                      <a
+                        href={item.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors w-full"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <item.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm font-normal text-foreground break-words leading-tight">
+                            {item.label}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </a>
+                      {index < group.items.length - 1 && (
+                        <div className="h-px bg-border ml-12" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Logout Button */}
         <div className="px-2 py-6 md:hidden">

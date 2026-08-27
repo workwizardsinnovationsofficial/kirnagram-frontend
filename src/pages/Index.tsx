@@ -17,7 +17,7 @@ import profileIcon from "@/assets/profileicon.png";
 import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import SuggestedUsers from "@/components/feed/SuggestedUsers";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 const FEED_CACHE_KEY = "kirnagram:home-feed-cache";
 const FEED_SCROLL_KEY = "kirnagram:home-feed-scroll";
 const ADSENSE_CLIENT = "ca-pub-4174888959110856";
