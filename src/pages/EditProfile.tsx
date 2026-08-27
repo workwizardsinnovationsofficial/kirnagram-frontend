@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    ArrowLeft,
+  ArrowLeft,
   Camera,
   User,
   Mail,
@@ -30,7 +30,7 @@ import { auth } from "@/firebase";
 import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const FULL_NAME_COOLDOWN_DAYS = 14;
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
@@ -107,9 +107,9 @@ const EditProfile = (): JSX.Element => {
 
   const getGenderFallback = (gender?: string, imageName?: string) => {
     // If image is a real uploaded file (from R2 or Google, valid URL), use it
-    if (imageName && imageName.trim() !== "" && 
-        !imageName.includes("default") && 
-        !imageName.includes("placeholder")) {
+    if (imageName && imageName.trim() !== "" &&
+      !imageName.includes("default") &&
+      !imageName.includes("placeholder")) {
       return imageName;
     }
     // Otherwise use gender-based icon
@@ -243,23 +243,23 @@ const EditProfile = (): JSX.Element => {
         setIsMobileVerified(hasMobileVerified);
 
         // Set avatar with fallback logic
-        const avatarUrl = data.image_name && 
-          data.image_name.trim() !== "" && 
+        const avatarUrl = data.image_name &&
+          data.image_name.trim() !== "" &&
           !data.image_name.includes("default") &&
           !data.image_name.includes("placeholder") &&
           !data.image_name.startsWith("blob:")  // ✅ Filter out blob URLs
-            ? data.image_name
-            : getGenderFallback(data.gender, data.image_name);
+          ? data.image_name
+          : getGenderFallback(data.gender, data.image_name);
         setAvatarPreview(avatarUrl);
-        
+
         // Set cover with fallback to hero banner
-        const coverUrl = data.cover_image && 
+        const coverUrl = data.cover_image &&
           data.cover_image.trim() !== "" &&
           !data.cover_image.includes("default") &&
           !data.cover_image.includes("placeholder") &&
           !data.cover_image.startsWith("blob:")  // ✅ Filter out blob URLs
-            ? data.cover_image
-            : heroBanner;
+          ? data.cover_image
+          : heroBanner;
         setCoverPreview(coverUrl);
 
         setLoading(false);
@@ -767,7 +767,7 @@ const EditProfile = (): JSX.Element => {
 
     try {
       console.log(`📤 Uploading ${type}:`, { filename: file.name, size: file.size });
-      
+
       const res = await fetch(`${API_BASE}/upload/${type}`, {
         method: "POST",
         headers: {
@@ -785,7 +785,7 @@ const EditProfile = (): JSX.Element => {
 
       const data = await res.json();
       console.log(`✅ Upload successful:`, { image_url: data.image_url });
-      
+
       if (!data?.image_url) {
         toast({ title: "Upload failed", description: "Invalid server response", variant: "destructive" });
         return null;
@@ -1010,12 +1010,12 @@ const EditProfile = (): JSX.Element => {
 
           if (token) {
             try {
-              const updatePayload = cropType === "profile" 
+              const updatePayload = cropType === "profile"
                 ? { image_name: uploadedUrl, skip_notification: true }
                 : { cover_image: uploadedUrl, skip_notification: true };
-              
+
               console.log(`📤 Saving ${cropType} to database:`, updatePayload);
-              
+
               const updateRes = await fetch(`${API_BASE}/profile/update`, {
                 method: "PUT",
                 headers: {
@@ -1024,7 +1024,7 @@ const EditProfile = (): JSX.Element => {
                 },
                 body: JSON.stringify(updatePayload),
               });
-              
+
               if (updateRes.ok) {
                 console.log(`✅ ${cropType} saved to database successfully`);
               } else {
@@ -1212,20 +1212,20 @@ const EditProfile = (): JSX.Element => {
       }
 
       // Only include images if they are actual URLs (not fallback icons or blob URLs)
-      if (avatarPreview && 
-          !avatarPreview.includes('maleicon') && 
-          !avatarPreview.includes('femaleicon') && 
-          !avatarPreview.includes('profileicon') &&
-          !avatarPreview.includes('avatar-2') &&
-          !avatarPreview.startsWith('blob:')) {  // ✅ Never save blob URLs
+      if (avatarPreview &&
+        !avatarPreview.includes('maleicon') &&
+        !avatarPreview.includes('femaleicon') &&
+        !avatarPreview.includes('profileicon') &&
+        !avatarPreview.includes('avatar-2') &&
+        !avatarPreview.startsWith('blob:')) {  // ✅ Never save blob URLs
         // Remove cache-busting query param before saving
         const cleanUrl = avatarPreview.split('?')[0];
         updatePayload.image_name = cleanUrl;
       }
 
-      if (coverPreview && 
-          !coverPreview.includes('hero-banner') &&
-          !coverPreview.startsWith('blob:')) {  // ✅ Never save blob URLs
+      if (coverPreview &&
+        !coverPreview.includes('hero-banner') &&
+        !coverPreview.startsWith('blob:')) {  // ✅ Never save blob URLs
         // Remove cache-busting query param before saving
         const cleanUrl = coverPreview.split('?')[0];
         updatePayload.cover_image = cleanUrl;
@@ -1309,11 +1309,11 @@ const EditProfile = (): JSX.Element => {
   // 🔹 DETECT CURRENT LOCATION
   const detectLocation = async () => {
     if (!navigator.geolocation) {
-      toast({ 
-        title: "Geolocation not supported", 
-        description: "Your browser doesn't support location detection", 
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support location detection",
         variant: "destructive",
-        duration: 2000 
+        duration: 2000
       });
       return;
     }
@@ -1322,16 +1322,16 @@ const EditProfile = (): JSX.Element => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         try {
           // Use BigDataCloud API (free, CORS-enabled, no API key needed)
           const response = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
           );
-          
+
           if (response.ok) {
             const data = await response.json();
-            
+
             // Format location: City, State/Region, Country
             const locationParts = [];
             if (data.city || data.locality) {
@@ -1343,13 +1343,13 @@ const EditProfile = (): JSX.Element => {
             if (data.countryName) {
               locationParts.push(data.countryName);
             }
-            
+
             const detectedLocation = locationParts.join(", ") || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             setFormData((prev) => ({ ...prev, location: detectedLocation }));
-            toast({ 
-              title: "📍 Location detected", 
+            toast({
+              title: "📍 Location detected",
               description: detectedLocation,
-              duration: 2000 
+              duration: 2000
             });
           } else {
             throw new Error("Geocoding failed");
@@ -1359,10 +1359,10 @@ const EditProfile = (): JSX.Element => {
           // Fallback to coordinates
           const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
           setFormData((prev) => ({ ...prev, location: coords }));
-          toast({ 
-            title: "📍 Location detected", 
+          toast({
+            title: "📍 Location detected",
             description: "Using coordinates",
-            duration: 2000 
+            duration: 2000
           });
         } finally {
           setDetectingLocation(false);
@@ -1371,16 +1371,16 @@ const EditProfile = (): JSX.Element => {
       (error) => {
         console.error("Geolocation error:", error);
         setDetectingLocation(false);
-        const message = error.code === 1 
-          ? "Location permission denied" 
+        const message = error.code === 1
+          ? "Location permission denied"
           : error.code === 3
-          ? "Location detection timeout"
-          : "Unable to detect location";
-        toast({ 
-          title: message, 
-          description: "Please enter manually", 
+            ? "Location detection timeout"
+            : "Unable to detect location";
+        toast({
+          title: message,
+          description: "Please enter manually",
           variant: "destructive",
-          duration: 2000 
+          duration: 2000
         });
       },
       {
@@ -1429,27 +1429,27 @@ const EditProfile = (): JSX.Element => {
   return (
     <MainLayout showRightSidebar={true}>
       <div className="max-w-2xl mx-auto overflow-x-hidden">
-       
-          <div className="flex items-center gap-3 mb-4 mt-4 ml-2">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-muted/50 transition-colors"
-              aria-label="Back"
-            >
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
-            <h1 className="text-xl font-display font-bold">Edit Profile</h1>
-            <button
-              type="submit"
-              form="edit-profile-form"
-              disabled={isSaveDisabled}
-              className="ml-auto px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-semibold flex items-center gap-2 shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
+
+        <div className="flex items-center gap-3 mb-4 mt-4 ml-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-muted/50 transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <h1 className="text-xl font-display font-bold">Edit Profile</h1>
+          <button
+            type="submit"
+            form="edit-profile-form"
+            disabled={isSaveDisabled}
+            className="ml-auto px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground font-semibold flex items-center gap-2 shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
 
         {/* Cover */}
         <div className="relative h-32 sm:h-48 rounded-xl overflow-hidden">
@@ -1519,7 +1519,7 @@ const EditProfile = (): JSX.Element => {
 
         {/* Avatar action sheet - Bottom on mobile, centered dialog on desktop */}
         {showAvatarSheet && (
-          <div 
+          <div
             className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -1558,7 +1558,7 @@ const EditProfile = (): JSX.Element => {
 
         {/* Cover action sheet - Bottom on mobile, centered dialog on desktop */}
         {showCoverSheet && (
-          <div 
+          <div
             className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -1591,7 +1591,7 @@ const EditProfile = (): JSX.Element => {
             </div>
           </div>
         )}
-        
+
         <input
           ref={coverInputRef}
           type="file"
@@ -1675,7 +1675,7 @@ const EditProfile = (): JSX.Element => {
 
         {/* Professional Crop Modal with Animations */}
         {showCropModal && (
-          <div 
+          <div
             className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200"
             onClick={(e) => {
               if (e.target === e.currentTarget && !uploadingImage) setShowCropModal(false);
@@ -1688,8 +1688,8 @@ const EditProfile = (): JSX.Element => {
                   <Camera className="w-5 h-5 text-primary" />
                   Crop {cropType === "profile" ? "Profile Photo" : "Cover Image"}
                 </h2>
-                <button 
-                  onClick={() => !uploadingImage && setShowCropModal(false)} 
+                <button
+                  onClick={() => !uploadingImage && setShowCropModal(false)}
                   disabled={uploadingImage}
                   className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
                 >
@@ -1711,7 +1711,7 @@ const EditProfile = (): JSX.Element => {
                   onZoomChange={setZoom}
                   objectFit="horizontal-cover"
                 />
-                
+
                 {uploadingImage && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-10">
                     <RotateCw className="w-8 h-8 text-primary animate-spin" />
@@ -1870,11 +1870,10 @@ const EditProfile = (): JSX.Element => {
                       key={option.value}
                       type="button"
                       onClick={() => handleGenderSelect(option.value)}
-                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                        formData.gender === option.value
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${formData.gender === option.value
                           ? "bg-orange-500/20 text-orange-200"
                           : "text-foreground hover:bg-orange-500/10"
-                      }`}
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -2050,17 +2049,16 @@ const Input = ({ label, icon, disabled, inputClassName = "", helperText = "", he
   <div>
     <label className="block text-sm font-medium mb-2 text-foreground">{label}</label>
     <div className="relative group">
-      <span className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${
-        disabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-primary"
-      }`}>
+      <span className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${disabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-primary"
+        }`}>
         {icon}
       </span>
       <input
         disabled={disabled}
         {...props}
         className={`w-full pl-12 pr-4 py-3 rounded-xl text-sm placeholder:text-muted-foreground transition-all
-          ${disabled 
-            ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-border/50" 
+          ${disabled
+            ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-border/50"
             : "bg-muted/50 border border-border hover:bg-muted/70 hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
           } ${inputClassName}
         `}

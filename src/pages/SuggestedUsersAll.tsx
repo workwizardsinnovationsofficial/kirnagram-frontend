@@ -7,7 +7,7 @@ import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 type SuggestedUser = {
   firebase_uid: string;
@@ -153,36 +153,36 @@ const SuggestedUsersAll = () => {
                   }}
                   className="w-full rounded-2xl border border-border bg-card p-3 flex items-center gap-3 cursor-pointer hover:border-primary/40 transition"
                 >
-                <img
-                  src={getAvatar(user)}
-                  alt={user.username || "User"}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate">
-                    {user.username || user.full_name || "User"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Suggested for you
-                  </p>
+                  <img
+                    src={getAvatar(user)}
+                    alt={user.username || "User"}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">
+                      {user.username || user.full_name || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Suggested for you
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const targetId = user.firebase_uid || user.public_id || user.username;
+                      if (targetId) {
+                        void handleFollow(targetId);
+                      }
+                    }}
+                    disabled={loadingUser === user.firebase_uid}
+                    className="shrink-0 bg-gradient-to-r from-secondary to-accent text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  >
+                    {loadingUser === user.firebase_uid ? "Following..." : "Follow"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const targetId = user.firebase_uid || user.public_id || user.username;
-                    if (targetId) {
-                      void handleFollow(targetId);
-                    }
-                  }}
-                  disabled={loadingUser === user.firebase_uid}
-                  className="shrink-0 bg-gradient-to-r from-secondary to-accent text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
-                >
-                  {loadingUser === user.firebase_uid ? "Following..." : "Follow"}
-                </button>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         )}
       </div>

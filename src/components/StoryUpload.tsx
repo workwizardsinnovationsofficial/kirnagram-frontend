@@ -5,7 +5,7 @@ import { auth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 interface StoryFile {
   file?: File | null;
@@ -21,7 +21,7 @@ const StoryUpload: React.FC = () => {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const textOverlayRef = useRef<HTMLDivElement>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
-  
+
   const [step, setStep] = useState<'select' | 'edit'>('select');
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [story, setStory] = useState<StoryFile | null>(null);
@@ -275,9 +275,9 @@ const StoryUpload: React.FC = () => {
     if (draggingEmojiIndex !== null) {
       const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
       const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-      
-      setEmojiStickers(prev => 
-        prev.map((sticker, idx) => 
+
+      setEmojiStickers(prev =>
+        prev.map((sticker, idx) =>
           idx === draggingEmojiIndex ? { ...sticker, x, y } : sticker
         )
       );
@@ -298,9 +298,9 @@ const StoryUpload: React.FC = () => {
     if (draggingEmojiIndex !== null) {
       const x = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
       const y = Math.max(0, Math.min(100, ((touch.clientY - rect.top) / rect.height) * 100));
-      
-      setEmojiStickers(prev => 
-        prev.map((sticker, idx) => 
+
+      setEmojiStickers(prev =>
+        prev.map((sticker, idx) =>
           idx === draggingEmojiIndex ? { ...sticker, x, y } : sticker
         )
       );
@@ -496,7 +496,7 @@ const StoryUpload: React.FC = () => {
 
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
-        else reject(new Error('Failed to generate image from text')); 
+        else reject(new Error('Failed to generate image from text'));
       }, 'image/jpeg', 0.95);
     });
   };
@@ -572,23 +572,23 @@ const StoryUpload: React.FC = () => {
       // Build query parameters
       const params = new URLSearchParams();
       params.append('media_type', story.type);
-      
+
       // Use actual trim duration for videos
       const videoDuration = story.type === 'video' ? Math.round(trimEnd - trimStart) : 10;
       params.append('duration', videoDuration.toString());
       params.append('visibility', 'public');
-      
+
       // Add trim info for videos
       if (story.type === 'video') {
         params.append('trim_start', trimStart.toFixed(1));
         params.append('trim_end', trimEnd.toFixed(1));
       }
-      
+
       // Add text overlay for videos (images already have it baked in)
       if (story.type === 'video' && text) {
         params.append('text', text);
       }
-      
+
       // Add emoji stickers for videos (images already have them baked in)
       if (story.type === 'video' && emojiStickers.length > 0) {
         params.append('emoji_stickers', JSON.stringify(emojiStickers));
@@ -597,7 +597,7 @@ const StoryUpload: React.FC = () => {
       const formData = new FormData();
       formData.append('file', fileToUpload);
 
-      const response = await fetch(`http://127.0.0.1:8000/stories/create?${params.toString()}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/create?${params.toString()}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -614,16 +614,16 @@ const StoryUpload: React.FC = () => {
 
       const data = await response.json();
       console.log('Story uploaded successfully:', data);
-      
+
       // Get the new story ID from response
       const storyId = data.story_id;
-      
+
       // Success notification
       toast({
         title: "Story posted! 🎉",
         description: "Your story is now live for your followers",
       });
-      
+
       // Navigate directly to the new story viewer
       setTimeout(() => {
         if (storyId) {
@@ -770,7 +770,7 @@ const StoryUpload: React.FC = () => {
       >
         {/* Story Preview Container - Desktop: 9:16 aspect ratio, Mobile: full screen */}
         <div className="relative w-full h-full lg:h-full lg:max-w-md lg:aspect-[9/16] lg:rounded-2xl overflow-hidden bg-black lg:shadow-2xl">
-          
+
           {/* Video Timeline Trimmer - Top */}
           {story?.type === 'video' && (
             <div className="absolute top-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
@@ -792,34 +792,34 @@ const StoryUpload: React.FC = () => {
                     {trimStart.toFixed(1)}s - {trimEnd.toFixed(1)}s • {(trimEnd - trimStart).toFixed(1)}s
                   </span>
                 </div>
-                
+
                 {/* Trim Range Slider */}
                 <div className="relative h-12 bg-gray-700 rounded-lg overflow-hidden">
                   {/* Dimmed areas outside trim range */}
-                  <div 
+                  <div
                     className="absolute top-0 left-0 bottom-0 bg-black/60"
                     style={{
                       width: `${(trimStart / (videoPreviewRef.current?.duration || 30)) * 100}%`
                     }}
                   />
-                  <div 
+                  <div
                     className="absolute top-0 right-0 bottom-0 bg-black/60"
                     style={{
                       width: `${100 - (trimEnd / (videoPreviewRef.current?.duration || 30)) * 100}%`
                     }}
                   />
-                  
+
                   {/* Selected/Active trim range */}
-                  <div 
+                  <div
                     className="absolute top-0 bottom-0 border-t-2 border-b-2 border-orange-500"
                     style={{
                       left: `${(trimStart / (videoPreviewRef.current?.duration || 30)) * 100}%`,
                       right: `${100 - (trimEnd / (videoPreviewRef.current?.duration || 30)) * 100}%`
                     }}
                   />
-                  
+
                   {/* Left trim handle */}
-                  <div 
+                  <div
                     className="absolute top-0 bottom-0 w-2 bg-orange-500 cursor-ew-resize z-30 hover:w-3 transition-all"
                     style={{
                       left: `${(trimStart / (videoPreviewRef.current?.duration || 30)) * 100}%`,
@@ -830,7 +830,7 @@ const StoryUpload: React.FC = () => {
                       const startTrim = trimStart;
                       const duration = videoPreviewRef.current?.duration || 30;
                       const sliderWidth = e.currentTarget.parentElement?.offsetWidth || 1;
-                      
+
                       const handleMove = (moveEvent: MouseEvent) => {
                         const deltaX = moveEvent.clientX - startX;
                         const deltaTime = (deltaX / sliderWidth) * duration;
@@ -840,12 +840,12 @@ const StoryUpload: React.FC = () => {
                           videoPreviewRef.current.currentTime = newTrimStart;
                         }
                       };
-                      
+
                       const handleUp = () => {
                         document.removeEventListener('mousemove', handleMove);
                         document.removeEventListener('mouseup', handleUp);
                       };
-                      
+
                       document.addEventListener('mousemove', handleMove);
                       document.addEventListener('mouseup', handleUp);
                     }}
@@ -854,7 +854,7 @@ const StoryUpload: React.FC = () => {
                       const startTrim = trimStart;
                       const duration = videoPreviewRef.current?.duration || 30;
                       const sliderWidth = e.currentTarget.parentElement?.offsetWidth || 1;
-                      
+
                       const handleMove = (moveEvent: TouchEvent) => {
                         const deltaX = moveEvent.touches[0].clientX - startX;
                         const deltaTime = (deltaX / sliderWidth) * duration;
@@ -864,21 +864,21 @@ const StoryUpload: React.FC = () => {
                           videoPreviewRef.current.currentTime = newTrimStart;
                         }
                       };
-                      
+
                       const handleEnd = () => {
                         document.removeEventListener('touchmove', handleMove);
                         document.removeEventListener('touchend', handleEnd);
                       };
-                      
+
                       document.addEventListener('touchmove', handleMove);
                       document.addEventListener('touchend', handleEnd);
                     }}
                   >
                     <div className="absolute inset-y-1/3 left-1/2 transform -translate-x-1/2 w-0.5 bg-white rounded-full" />
                   </div>
-                  
+
                   {/* Right trim handle */}
-                  <div 
+                  <div
                     className="absolute top-0 bottom-0 w-2 bg-orange-500 cursor-ew-resize z-30 hover:w-3 transition-all"
                     style={{
                       left: `${(trimEnd / (videoPreviewRef.current?.duration || 30)) * 100}%`,
@@ -890,19 +890,19 @@ const StoryUpload: React.FC = () => {
                       const startTrim = trimEnd;
                       const duration = videoPreviewRef.current?.duration || 30;
                       const sliderWidth = e.currentTarget.parentElement?.offsetWidth || 1;
-                      
+
                       const handleMove = (moveEvent: MouseEvent) => {
                         const deltaX = moveEvent.clientX - startX;
                         const deltaTime = (deltaX / sliderWidth) * duration;
                         const newTrimEnd = Math.max(trimStart + 0.5, Math.min(duration, Math.min(trimStart + 30, startTrim + deltaTime)));
                         setTrimEnd(newTrimEnd);
                       };
-                      
+
                       const handleUp = () => {
                         document.removeEventListener('mousemove', handleMove);
                         document.removeEventListener('mouseup', handleUp);
                       };
-                      
+
                       document.addEventListener('mousemove', handleMove);
                       document.addEventListener('mouseup', handleUp);
                     }}
@@ -911,26 +911,26 @@ const StoryUpload: React.FC = () => {
                       const startTrim = trimEnd;
                       const duration = videoPreviewRef.current?.duration || 30;
                       const sliderWidth = e.currentTarget.parentElement?.offsetWidth || 1;
-                      
+
                       const handleMove = (moveEvent: TouchEvent) => {
                         const deltaX = moveEvent.touches[0].clientX - startX;
                         const deltaTime = (deltaX / sliderWidth) * duration;
                         const newTrimEnd = Math.max(trimStart + 0.5, Math.min(duration, Math.min(trimStart + 30, startTrim + deltaTime)));
                         setTrimEnd(newTrimEnd);
                       };
-                      
+
                       const handleEnd = () => {
                         document.removeEventListener('touchmove', handleMove);
                         document.removeEventListener('touchend', handleEnd);
                       };
-                      
+
                       document.addEventListener('touchmove', handleMove);
                       document.addEventListener('touchend', handleEnd);
                     }}
                   >
                     <div className="absolute inset-y-1/3 left-1/2 transform -translate-x-1/2 w-0.5 bg-white rounded-full" />
                   </div>
-                  
+
                   <div className="absolute inset-0 flex items-center justify-center text-gray-900 dark:text-white text-xs font-medium pointer-events-none">
                     Drag handles to trim
                   </div>
@@ -963,7 +963,7 @@ const StoryUpload: React.FC = () => {
                 controls
                 playsInline
                 onCanPlay={() => {
-                  videoPreviewRef.current?.play().catch(() => {});
+                  videoPreviewRef.current?.play().catch(() => { });
                 }}
                 onError={() => {
                   toast({
@@ -975,75 +975,73 @@ const StoryUpload: React.FC = () => {
               />
             )}
 
-        {/* Text Overlay - Draggable */}
-        {text && (
-          <div
-            ref={textOverlayRef}
-            className={`absolute bg-black/60 backdrop-blur-sm text-gray-900 dark:text-white p-3 rounded-lg max-w-xs z-30 select-none transition-all duration-100 ${
-              isDraggingText 
-                ? 'cursor-grabbing bg-black/80 scale-110 shadow-2xl' 
-                : 'cursor-grab hover:bg-black/70 hover:scale-105'
-            }`}
-            style={{
-              left: `${textPosition.x}%`,
-              top: `${textPosition.y}%`,
-              transform: 'translate(-50%, -50%)',
-              touchAction: 'none',
-            }}
-            onMouseDown={handleTextMouseDown}
-            onTouchStart={handleTextTouchStart}
-          >
-            <p className="text-sm lg:text-lg font-semibold break-words pointer-events-none">{text}</p>
-          </div>
-        )}
-
-        {/* Emoji Stickers - Draggable */}
-        {emojiStickers.map((sticker, idx) => (
-          <div
-            key={idx}
-            className={`absolute text-4xl lg:text-5xl select-none transition-all duration-100 ${
-              draggingEmojiIndex === idx
-                ? 'cursor-grabbing scale-125 opacity-90 z-40'
-                : 'cursor-grab hover:scale-110 z-35'
-            }`}
-            style={{
-              left: `${sticker.x}%`,
-              top: `${sticker.y}%`,
-              transform: 'translate(-50%, -50%)',
-              touchAction: 'none',
-            }}
-            onMouseDown={(e) => handleEmojiMouseDown(e, idx)}
-            onTouchStart={(e) => handleEmojiTouchStart(e, idx)}
-          >
-            {sticker.emoji}
-          </div>
-        ))}
-
-        {/* Tools Overlay */}
-        <div className="absolute top-4 left-4 right-4 flex gap-2 z-40" style={{ marginTop: story?.type === 'video' ? '80px' : '0' }}>
-          <button
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="bg-white/20 hover:bg-white/30 text-gray-900 dark:text-white p-3 rounded-full backdrop-blur-sm transition"
-            title="Add emoji"
-          >
-            <Smile size={20} />
-          </button>
-        </div>
-
-        {/* Emoji Picker */}
-        {showEmojiPicker && (
-          <div className="absolute top-20 left-4 bg-card border border-border rounded-lg p-3 grid grid-cols-4 gap-2 w-48 z-50 shadow-2xl" style={{ marginTop: story?.type === 'video' ? '80px' : '0' }}>
-            {emojis.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleAddEmoji(emoji)}
-                className="text-2xl hover:scale-125 transition"
+            {/* Text Overlay - Draggable */}
+            {text && (
+              <div
+                ref={textOverlayRef}
+                className={`absolute bg-black/60 backdrop-blur-sm text-gray-900 dark:text-white p-3 rounded-lg max-w-xs z-30 select-none transition-all duration-100 ${isDraggingText
+                    ? 'cursor-grabbing bg-black/80 scale-110 shadow-2xl'
+                    : 'cursor-grab hover:bg-black/70 hover:scale-105'
+                  }`}
+                style={{
+                  left: `${textPosition.x}%`,
+                  top: `${textPosition.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  touchAction: 'none',
+                }}
+                onMouseDown={handleTextMouseDown}
+                onTouchStart={handleTextTouchStart}
               >
-                {emoji}
-              </button>
+                <p className="text-sm lg:text-lg font-semibold break-words pointer-events-none">{text}</p>
+              </div>
+            )}
+
+            {/* Emoji Stickers - Draggable */}
+            {emojiStickers.map((sticker, idx) => (
+              <div
+                key={idx}
+                className={`absolute text-4xl lg:text-5xl select-none transition-all duration-100 ${draggingEmojiIndex === idx
+                    ? 'cursor-grabbing scale-125 opacity-90 z-40'
+                    : 'cursor-grab hover:scale-110 z-35'
+                  }`}
+                style={{
+                  left: `${sticker.x}%`,
+                  top: `${sticker.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  touchAction: 'none',
+                }}
+                onMouseDown={(e) => handleEmojiMouseDown(e, idx)}
+                onTouchStart={(e) => handleEmojiTouchStart(e, idx)}
+              >
+                {sticker.emoji}
+              </div>
             ))}
-          </div>
-        )}
+
+            {/* Tools Overlay */}
+            <div className="absolute top-4 left-4 right-4 flex gap-2 z-40" style={{ marginTop: story?.type === 'video' ? '80px' : '0' }}>
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="bg-white/20 hover:bg-white/30 text-gray-900 dark:text-white p-3 rounded-full backdrop-blur-sm transition"
+                title="Add emoji"
+              >
+                <Smile size={20} />
+              </button>
+            </div>
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="absolute top-20 left-4 bg-card border border-border rounded-lg p-3 grid grid-cols-4 gap-2 w-48 z-50 shadow-2xl" style={{ marginTop: story?.type === 'video' ? '80px' : '0' }}>
+                {emojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleAddEmoji(emoji)}
+                    className="text-2xl hover:scale-125 transition"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Bottom Controls - Inside story container on desktop */}
@@ -1061,11 +1059,10 @@ const StoryUpload: React.FC = () => {
             <button
               onClick={handleUpload}
               disabled={uploading}
-              className={`relative w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition overflow-hidden ${
-                uploading
+              className={`relative w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition overflow-hidden ${uploading
                   ? 'bg-muted text-muted-foreground cursor-not-allowed'
                   : 'bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-primary-foreground shadow-lg shadow-primary/30'
-              }`}
+                }`}
             >
               {/* Liquid fill animation */}
               {uploading && (

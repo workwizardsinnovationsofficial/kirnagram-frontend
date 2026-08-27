@@ -15,7 +15,7 @@ import { auth } from "@/firebase";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Download, Image as ImageIcon, Sparkles, Upload, Send } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "https://api-r.kirnagram.com";
 
 const normalizeVariableKey = (value: string) =>
@@ -320,7 +320,7 @@ const Remix = () => {
       }
       try {
         const res = await fetchWithFreshToken(`${REMIX_API_BASE}/remix/prompt/${promptId}`);
-        
+
         // Handle specific HTTP status codes
         if (res.status === 403) {
           throw new Error("This remix is private");
@@ -332,7 +332,7 @@ const Remix = () => {
           throw new Error("Server error, please try again");
         }
         if (!res.ok) throw new Error("Failed to load prompt");
-        
+
         const data = await res.json();
         setPrompt(data);
         const aiModel = (data.ai_model || "chatgpt").toLowerCase();
@@ -1086,11 +1086,10 @@ const Remix = () => {
                   key={stepInfo.step}
                   type="button"
                   onClick={() => setWizardStep(stepInfo.step as 1 | 2)}
-                  className={`rounded-3xl border px-4 py-3 text-left transition ${
-                    wizardStep === stepInfo.step
+                  className={`rounded-3xl border px-4 py-3 text-left transition ${wizardStep === stepInfo.step
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background text-muted-foreground hover:border-primary/70"
-                  }`}
+                    }`}
                 >
                   <span className="text-[10px] uppercase tracking-[0.24em]">
                     Step {stepInfo.step}
@@ -1102,7 +1101,7 @@ const Remix = () => {
           )}
         </div>
 
-          <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
+        <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
           <div className="space-y-4">
             {/* If generating, show focused loading view; otherwise show the active step */}
             {generating ? (
@@ -1162,7 +1161,7 @@ const Remix = () => {
 
                 <div className="border-t border-border/50 pt-4 space-y-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Report an issue</p>
-                  
+
                   {issueFeedback ? (
                     <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-500/30 p-3">
                       <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">✓ Issue reported</p>

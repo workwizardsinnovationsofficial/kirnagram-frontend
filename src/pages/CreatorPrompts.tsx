@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type Prompt = {
   _id: string;
@@ -52,13 +52,13 @@ const normalizePrompt = (raw: any): Prompt => {
 
   const comments = Array.isArray(raw?.comments)
     ? raw.comments.map((item: any) => ({
-        comment_id: item?.comment_id || item?._id || `${Math.random()}`,
-        user_id: item?.user_id,
-        username: item?.username || item?.user_name || "User",
-        user_image: item?.user_image,
-        text: item?.text || item?.message || item?.comment || "",
-        created_at: item?.created_at,
-      }))
+      comment_id: item?.comment_id || item?._id || `${Math.random()}`,
+      user_id: item?.user_id,
+      username: item?.username || item?.user_name || "User",
+      user_image: item?.user_image,
+      text: item?.text || item?.message || item?.comment || "",
+      created_at: item?.created_at,
+    }))
     : [];
 
   return {
@@ -292,7 +292,7 @@ const CreatorPrompts = () => {
     return (
       <MainLayout showRightSidebar={true}>
         <div className="max-w-4xl mx-auto px-3 md:px-0 pb-24 md:pb-8 overflow-x-hidden">
-          <button 
+          <button
             onClick={() => setSelectedPrompt(null)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
           >
@@ -320,17 +320,17 @@ const CreatorPrompts = () => {
                   <h1 className="text-xl md:text-2xl font-display font-bold">{selectedPrompt.style_name}</h1>
                   <span className={cn(
                     "text-xs px-2 py-0.5 rounded-full mt-1 inline-block",
-                    selectedPrompt.status === "approved" 
-                      ? "bg-green-500/20 text-green-500" 
+                    selectedPrompt.status === "approved"
+                      ? "bg-green-500/20 text-green-500"
                       : selectedPrompt.status === "pending"
                         ? "bg-yellow-500/20 text-yellow-500"
                         : selectedPrompt.status === "delete_requested"
                           ? "bg-red-500/20 text-red-400"
                           : selectedPrompt.status === "deleted"
                             ? "bg-zinc-500/20 text-zinc-400"
-                        : selectedPrompt.status === "modify" || selectedPrompt.status === "modified"
-                          ? "bg-orange-500/20 text-orange-500"
-                          : "bg-red-500/20 text-red-500"
+                            : selectedPrompt.status === "modify" || selectedPrompt.status === "modified"
+                              ? "bg-orange-500/20 text-orange-500"
+                              : "bg-red-500/20 text-red-500"
                   )}>
                     {selectedPrompt.status === "modify" ? "modified" : selectedPrompt.status}
                   </span>
@@ -451,7 +451,7 @@ const CreatorPrompts = () => {
             <h1 className="text-xl md:text-2xl font-display font-bold">My Prompts</h1>
             <p className="text-sm text-muted-foreground">{activePromptCount} active prompts</p>
           </div>
-          <Link 
+          <Link
             to="/ai-creator/add-prompt"
             className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium"
           >
@@ -463,7 +463,7 @@ const CreatorPrompts = () => {
         <div className="flex gap-2 mb-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input 
+            <input
               type="text"
               placeholder="Search prompts..."
               value={search}
@@ -484,8 +484,8 @@ const CreatorPrompts = () => {
               onClick={() => setFilter(f as typeof filter)}
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors",
-                filter === f 
-                  ? "bg-primary text-primary-foreground" 
+                filter === f
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted"
               )}
             >
@@ -503,7 +503,7 @@ const CreatorPrompts = () => {
             <div className="text-sm text-red-500">{error}</div>
           )}
           {!loading && !error && filteredPrompts.map((prompt) => (
-            <div 
+            <div
               key={prompt._id}
               onClick={() => loadPromptDetail(prompt._id)}
               className="flex items-center gap-3 p-3 bg-card border border-border rounded-2xl hover:border-primary/50 transition-all cursor-pointer group"
@@ -525,17 +525,17 @@ const CreatorPrompts = () => {
                   <h3 className="font-semibold truncate">{prompt.style_name}</h3>
                   <span className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full",
-                    prompt.status === "approved" 
-                      ? "bg-green-500/20 text-green-500" 
+                    prompt.status === "approved"
+                      ? "bg-green-500/20 text-green-500"
                       : prompt.status === "pending"
                         ? "bg-yellow-500/20 text-yellow-500"
                         : prompt.status === "delete_requested"
                           ? "bg-red-500/20 text-red-400"
                           : prompt.status === "deleted"
                             ? "bg-zinc-500/20 text-zinc-400"
-                        : prompt.status === "modify" || prompt.status === "modified"
-                          ? "bg-orange-500/20 text-orange-500"
-                          : "bg-red-500/20 text-red-500"
+                            : prompt.status === "modify" || prompt.status === "modified"
+                              ? "bg-orange-500/20 text-orange-500"
+                              : "bg-red-500/20 text-red-500"
                   )}>
                     {prompt.status === "modify" ? "modified" : prompt.status}
                   </span>

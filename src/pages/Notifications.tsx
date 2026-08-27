@@ -9,7 +9,7 @@ import profileIcon from "@/assets/profileicon.png";
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -199,7 +199,7 @@ const Notifications = () => {
           description: data.follow_status === "following" ? "Now following" : "Follow request sent",
           duration: 1500,
         });
-        
+
         // Reload notifications to update button state
         await loadNotifications();
       } else {
@@ -219,17 +219,17 @@ const Notifications = () => {
   };
 
   const getFallbackAvatar = (userImage: string | null, gender?: string | null) => {
-    const hasCustomImage = userImage && 
-      userImage.trim() !== "" && 
-      !userImage.includes("default") && 
-      !userImage.includes("placeholder") && 
+    const hasCustomImage = userImage &&
+      userImage.trim() !== "" &&
+      !userImage.includes("default") &&
+      !userImage.includes("placeholder") &&
       !userImage.startsWith("blob:");
 
     if (hasCustomImage) {
       const cacheBuster = userImage!.includes("?") ? "&" : "?";
       return `${userImage}${cacheBuster}t=${Date.now()}`;
     }
-    
+
     if (gender === "male") return maleIcon;
     if (gender === "female") return femaleIcon;
     return profileIcon;
@@ -321,7 +321,7 @@ const Notifications = () => {
               const isPromptModify =
                 isAiCreatorPromptDecision &&
                 (notif.status === "modify" || notif.status === "modified" || notif.action === "ai_creator_prompt_modify" || notif.action === "ai_creator_prompt_modified");
-              
+
               // 💳 New notification types for payments and credits
               const isCreditsBurned = notif.action === "credits_burned";
               const isCreditsPurchased = notif.action === "credits_purchased";
@@ -342,7 +342,7 @@ const Notifications = () => {
                 (notif.description || notif.message || "You have a new notification").toString().trim();
               const displaySenderName =
                 (notif.from_user_name || notif.user_name || (isSystemNotification ? "Kirnagram Official" : "User")).toString().trim();
-              
+
               // Determine button to show based on follow_status in notification
               const shouldShowFollowBack = isStartedFollowing && notif.follow_status === "none";
               const shouldShowRequestedStatus = isStartedFollowing && notif.follow_status === "requested";
@@ -357,17 +357,16 @@ const Notifications = () => {
                   <div className="flex gap-3 items-center">
                     {/* Avatar - For system notifications, show system icon */}
                     {isSystemNotification ? (
-                      <div className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center ${
-                        isPaymentNotification 
-                          ? isCreditsBurned 
+                      <div className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center ${isPaymentNotification
+                          ? isCreditsBurned
                             ? "bg-red-500/20 border-red-500/30"
-                            : isCreditsPurchased 
-                            ? "bg-green-500/20 border-green-500/30"
-                            : isAdPaymentVerified
-                            ? "bg-blue-500/20 border-blue-500/30"
-                            : "bg-purple-500/20 border-purple-500/30"
+                            : isCreditsPurchased
+                              ? "bg-green-500/20 border-green-500/30"
+                              : isAdPaymentVerified
+                                ? "bg-blue-500/20 border-blue-500/30"
+                                : "bg-purple-500/20 border-purple-500/30"
                           : "bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-green-500/30"
-                      }`}>
+                        }`}>
                         {isPaymentNotification ? (
                           isCreditsBurned ? (
                             <Flame className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
@@ -416,25 +415,24 @@ const Notifications = () => {
                             {isPaymentNotification
                               ? "💳 Payment Update"
                               : isProfileUpdated
-                              ? "Profile Update"
-                              : isAiCreatorStatus || isAiCreatorPromptDecision
-                              ? "Kirnagram Official"
-                              : "Prompt Earnings Updated"}
+                                ? "Profile Update"
+                                : isAiCreatorStatus || isAiCreatorPromptDecision
+                                  ? "Kirnagram Official"
+                                  : "Prompt Earnings Updated"}
                           </p>
                           <button
                             type="button"
                             onClick={() => setExpandedNotificationId((prev) => (prev === notif._id ? null : notif._id))}
-                            className={`mt-0.5 block w-full text-left text-xs md:text-sm font-medium ${isExpanded ? "whitespace-pre-wrap" : "line-clamp-2"} ${
-                            isPaymentNotification 
-                              ? isCreditsBurned 
-                                ? "text-red-600 dark:text-red-400"
-                                : isCreditsPurchased
-                                ? "text-green-600 dark:text-green-400"
-                                : isAdPaymentVerified
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-purple-600 dark:text-purple-400"
-                              : "text-foreground"
-                          }`}>
+                            className={`mt-0.5 block w-full text-left text-xs md:text-sm font-medium ${isExpanded ? "whitespace-pre-wrap" : "line-clamp-2"} ${isPaymentNotification
+                                ? isCreditsBurned
+                                  ? "text-red-600 dark:text-red-400"
+                                  : isCreditsPurchased
+                                    ? "text-green-600 dark:text-green-400"
+                                    : isAdPaymentVerified
+                                      ? "text-blue-600 dark:text-blue-400"
+                                      : "text-purple-600 dark:text-purple-400"
+                                : "text-foreground"
+                              }`}>
                             {displayDescription}
                           </button>
                           {displayDescription.length > 90 && (

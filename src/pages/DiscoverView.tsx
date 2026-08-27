@@ -7,7 +7,7 @@ import femaleIcon from "@/assets/femaleicon.png";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { auth } from "@/firebase";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 /* ================= TYPES ================= */
 
@@ -198,7 +198,7 @@ const DiscoverView: React.FC = () => {
 
       if (idx === currentIndex) {
         video.currentTime = 0;
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       } else {
         video.pause();
         video.currentTime = 0;
@@ -279,11 +279,11 @@ const DiscoverView: React.FC = () => {
       prev.map((p) =>
         p._id === postId
           ? {
-              ...p,
-              likes: p.likes?.includes(user.uid)
-                ? p.likes.filter((id) => id !== user.uid)
-                : [...(p.likes || []), user.uid],
-            }
+            ...p,
+            likes: p.likes?.includes(user.uid)
+              ? p.likes.filter((id) => id !== user.uid)
+              : [...(p.likes || []), user.uid],
+          }
           : p
       )
     );
@@ -558,11 +558,10 @@ const DiscoverView: React.FC = () => {
                     className="flex items-center justify-center"
                   >
                     <Heart
-                      className={`w-7 h-7 transition ${
-                        isLiked
+                      className={`w-7 h-7 transition ${isLiked
                           ? "text-red-500 fill-red-500"
                           : "text-foreground"
-                      }`}
+                        }`}
                     />
                   </button>
                   <button
@@ -593,21 +592,21 @@ const DiscoverView: React.FC = () => {
                     className="flex items-center gap-3"
                     onClick={() => navigate(`/user/${post.user_id}`)}
                   >
-                 <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full overflow-hidden border-2 border-border flex items-center justify-center bg-card shadow-md mr-1">
-  <img
-    src={getProfileImage(post.user_id, profiles[post.user_id])}
-    alt={`${profiles[post.user_id]?.username || "User"} avatar`}
-    onError={() => {
-      setAvatarLoadFailedByUser((prev) => {
-        if (prev[post.user_id]) return prev;
-        return { ...prev, [post.user_id]: true };
-      });
-    }}
-    className="w-full h-full object-cover object-center select-none"
-    draggable={false}
-    style={{ display: 'block' }}
-  />
-</div>
+                    <div className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full overflow-hidden border-2 border-border flex items-center justify-center bg-card shadow-md mr-1">
+                      <img
+                        src={getProfileImage(post.user_id, profiles[post.user_id])}
+                        alt={`${profiles[post.user_id]?.username || "User"} avatar`}
+                        onError={() => {
+                          setAvatarLoadFailedByUser((prev) => {
+                            if (prev[post.user_id]) return prev;
+                            return { ...prev, [post.user_id]: true };
+                          });
+                        }}
+                        className="w-full h-full object-cover object-center select-none"
+                        draggable={false}
+                        style={{ display: 'block' }}
+                      />
+                    </div>
                     <div>
                       <span className="font-semibold cursor-pointer">
                         {getHandleText(profiles[post.user_id])}

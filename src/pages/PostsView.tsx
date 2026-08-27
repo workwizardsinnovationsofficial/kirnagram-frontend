@@ -13,7 +13,7 @@ import profileIcon from "@/assets/profileicon.png";
 import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import { Volume2, VolumeX } from "lucide-react";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type Post = {
   _id: string;
@@ -102,22 +102,22 @@ const PostsView = () => {
   }, [posts, initialPostId, startIndex]);
 
 
-const toggleMute = () => {
-  setIsMuted((prev) => {
-    const newState = !prev;
+  const toggleMute = () => {
+    setIsMuted((prev) => {
+      const newState = !prev;
 
-    // Apply mute state to all videos
-    Object.values(videoRefs.current).forEach((video) => {
-      if (video) {
-        video.muted = newState;
-      }
+      // Apply mute state to all videos
+      Object.values(videoRefs.current).forEach((video) => {
+        if (video) {
+          video.muted = newState;
+        }
+      });
+
+      return newState;
     });
+  };
 
-    return newState;
-  });
-};
-
-useEffect(() => {
+  useEffect(() => {
     if (statePosts && Array.isArray(statePosts)) {
       setPosts(statePosts);
       const targetId = userId || auth.currentUser?.uid;
@@ -259,9 +259,9 @@ useEffect(() => {
       (entries) => {
         entries.forEach((entry) => {
           const video = entry.target as HTMLVideoElement;
-  
+
           if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
-  
+
             // Pause ALL other videos
             Object.values(videoRefs.current).forEach((v) => {
               if (v && v !== video) {
@@ -269,11 +269,11 @@ useEffect(() => {
                 v.currentTime = 0; // RESET other videos
               }
             });
-  
+
             // Start from beginning
             video.currentTime = 0;
-            video.play().catch(() => {});
-  
+            video.play().catch(() => { });
+
           } else {
             video.pause();
             video.currentTime = 0; // IMPORTANT: reset when leaving screen
@@ -282,13 +282,13 @@ useEffect(() => {
       },
       { threshold: 0.7 }
     );
-  
+
     const timer = setTimeout(() => {
       Object.values(videoRefs.current).forEach((video) => {
         if (video) observer.observe(video);
       });
     }, 200);
-  
+
     return () => {
       clearTimeout(timer);
       observer.disconnect();
@@ -470,7 +470,7 @@ useEffect(() => {
       fetch(`${API_BASE}/posts/view/${postId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
+      }).catch(() => { });
     } catch {
       // ignore view errors
     }
@@ -551,42 +551,42 @@ useEffect(() => {
   }, [posts]);
 
   // STEP 2 — ADD THIS NEW CLEAN VERSION
-useEffect(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        const video = entry.target as HTMLVideoElement;
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target as HTMLVideoElement;
 
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          // Pause all other videos
-          Object.values(videoRefs.current).forEach((v) => {
-            if (v && v !== video) {
-              v.pause();
-              v.currentTime = 0;
-            }
-          });
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            // Pause all other videos
+            Object.values(videoRefs.current).forEach((v) => {
+              if (v && v !== video) {
+                v.pause();
+                v.currentTime = 0;
+              }
+            });
 
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
+            video.play().catch(() => { });
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    // IMPORTANT: observe after small delay
+    const timer = setTimeout(() => {
+      Object.values(videoRefs.current).forEach((video) => {
+        if (video) observer.observe(video);
       });
-    },
-    { threshold: 0.6 }
-  );
+    }, 300);
 
-  // IMPORTANT: observe after small delay
-  const timer = setTimeout(() => {
-    Object.values(videoRefs.current).forEach((video) => {
-      if (video) observer.observe(video);
-    });
-  }, 300);
-
-  return () => {
-    clearTimeout(timer);
-    observer.disconnect();
-  };
-}, [posts]);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [posts]);
 
   const handleShare = async (post: Post) => {
     const shareUrl = `${window.location.origin}/posts/view/${post.user_id}?postId=${post._id}`;

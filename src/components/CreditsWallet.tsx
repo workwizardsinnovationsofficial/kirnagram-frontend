@@ -10,7 +10,7 @@ import { claimDailyCredits, CreditsSummary, fetchCreditsSummary } from "@/lib/cr
 import { toast } from "@/components/ui/use-toast";
 
 const DAILY_BONUS_AD_SECONDS = 6;
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || "";
 
 const buyCredits = async (amount: number) => {
@@ -383,7 +383,7 @@ export function CreditsWalletPanel({ variant = "page" }: { variant?: "page" | "m
             <p className="text-sm text-muted-foreground">Credits add instantly after payment.</p>
           </div>
           <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" disabled>
-                buyCredits(plan.price);
+            buyCredits(plan.price);
             <ArrowUpRight className="w-4 h-4" />
           </Button>
         </div>

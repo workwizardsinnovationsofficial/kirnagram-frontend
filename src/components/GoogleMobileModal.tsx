@@ -37,7 +37,7 @@ export const GoogleMobileModal = ({
     }
 
     try {
-      const checkRes = await fetch("http://127.0.0.1:8000/auth/check-user", {
+      const checkRes = await fetch("https://api.kirnagram.com/auth/check-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "", mobile: value }),
@@ -85,7 +85,7 @@ export const GoogleMobileModal = ({
       const token = await user.getIdToken();
 
       // Update user profile with mobile number
-      const res = await fetch("http://127.0.0.1:8000/profile/update", {
+      const res = await fetch("https://api.kirnagram.com/profile/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -135,10 +135,9 @@ export const GoogleMobileModal = ({
                 disabled={loading}
                 className={`w-full pl-12 pr-4 py-3 bg-muted/50 rounded-xl text-sm placeholder:text-muted-foreground 
                   focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    mobileError
-                      ? "border-2 border-red-600 focus:ring-red-600 focus:border-red-600"
-                      : "border border-border focus:ring-primary/50 focus:border-primary/50"
+                  ${mobileError
+                    ? "border-2 border-red-600 focus:ring-red-600 focus:border-red-600"
+                    : "border border-border focus:ring-primary/50 focus:border-primary/50"
                   }
                 `}
                 maxLength={10}

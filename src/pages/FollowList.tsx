@@ -8,7 +8,7 @@ import profileIcon from "@/assets/profileicon.png";
 import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 type TabType = "followers" | "following";
 
@@ -50,7 +50,7 @@ const FollowList = () => {
     setLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      
+
       // Load profile user info first to check privacy
       if (!profileUser) {
         const profileRes = await fetch(`${API_BASE}/follow/${userId}`, {
@@ -59,12 +59,12 @@ const FollowList = () => {
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setProfileUser(profileData);
-          
+
           // Check if private account and not following
           const isPrivate = profileData.account_type === "private";
           const isFollowing = profileData.follow_status === "following";
           const isOwnProfile = currentUser.uid === userId;
-          
+
           // If private and not following (and not own profile), don't load list
           if (isPrivate && !isFollowing && !isOwnProfile) {
             setUsers([]);
@@ -73,8 +73,8 @@ const FollowList = () => {
           }
         }
       }
-      
-      const endpoint = activeTab === "followers" 
+
+      const endpoint = activeTab === "followers"
         ? `${API_BASE}/follow/followers/${userId}`
         : `${API_BASE}/follow/following/${userId}`;
 
@@ -84,7 +84,7 @@ const FollowList = () => {
 
       if (res.ok) {
         const data = await res.json();
-        
+
         // Add follow_status to each user
         const usersWithStatus = await Promise.all(
           (data[activeTab] || []).map(async (user: any) => {
@@ -222,10 +222,10 @@ const FollowList = () => {
 
   const getProfileImage = (user: any) => {
     const img = user.image_name as string | undefined;
-    const hasCustomImage = img && 
-      img.trim() !== "" && 
-      !img.includes("default") && 
-      !img.includes("placeholder") && 
+    const hasCustomImage = img &&
+      img.trim() !== "" &&
+      !img.includes("default") &&
+      !img.includes("placeholder") &&
       !img.startsWith("blob:");
 
     if (hasCustomImage) {
@@ -273,11 +273,10 @@ const FollowList = () => {
           <div className="flex border-t border-border">
             <button
               onClick={() => handleTabChange("followers")}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                activeTab === "followers"
+              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${activeTab === "followers"
                   ? "text-foreground"
                   : "text-muted-foreground"
-              }`}
+                }`}
             >
               Followers
               {activeTab === "followers" && (
@@ -286,11 +285,10 @@ const FollowList = () => {
             </button>
             <button
               onClick={() => handleTabChange("following")}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                activeTab === "following"
+              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${activeTab === "following"
                   ? "text-foreground"
                   : "text-muted-foreground"
-              }`}
+                }`}
             >
               Following
               {activeTab === "following" && (
@@ -306,9 +304,9 @@ const FollowList = () => {
             <div className="flex items-center justify-center py-20">
               <p className="text-muted-foreground">Loading...</p>
             </div>
-          ) : profileUser?.account_type === "private" && 
-             profileUser?.follow_status !== "following" && 
-             currentUser?.uid !== userId ? (
+          ) : profileUser?.account_type === "private" &&
+            profileUser?.follow_status !== "following" &&
+            currentUser?.uid !== userId ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                 <UserCheck className="w-10 h-10 text-muted-foreground" />

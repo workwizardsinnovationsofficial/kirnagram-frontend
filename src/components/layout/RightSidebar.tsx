@@ -12,11 +12,11 @@ type ApprovedPrompt = {
   remixes_count?: number;
 };
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 export function RightSidebar() {
   const navigate = useNavigate();
-  const { theme, setTheme, resolvedTheme } = useTheme ? useTheme() : { theme: "system", resolvedTheme: "light", setTheme: () => {} };
+  const { theme, setTheme, resolvedTheme } = useTheme ? useTheme() : { theme: "system", resolvedTheme: "light", setTheme: () => { } };
   const { unreadCount } = useNotificationStore();
   const [approvedPrompts, setApprovedPrompts] = useState<ApprovedPrompt[]>([]);
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
@@ -80,13 +80,13 @@ export function RightSidebar() {
     approvedPrompts.forEach((prompt) => {
       const weight = Math.max(1, Number(prompt.remixes_count || 0));
       (prompt.tags || []).forEach((rawTag) => {
-          const normalized = String(rawTag || "")
-            .trim()
-            .replace(/^#+/, "")
-            .toLowerCase();
+        const normalized = String(rawTag || "")
+          .trim()
+          .replace(/^#+/, "")
+          .toLowerCase();
 
-          if (!normalized) return;
-          counts.set(normalized, (counts.get(normalized) || 0) + weight);
+        if (!normalized) return;
+        counts.set(normalized, (counts.get(normalized) || 0) + weight);
       });
     });
 

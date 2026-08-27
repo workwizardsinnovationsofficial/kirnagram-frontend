@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 type LoginStep = "email_mobile_input" | "password_entry" | "forgot_password_email_mobile" | "forgot_password_otp" | "reset_password_entry";
 
@@ -368,8 +368,8 @@ const Login = () => {
 
       // Reset to login method selection
       setPassword("");
-    setShowForgotPasswordOptions(false);
-    setStep("password_entry");
+      setShowForgotPasswordOptions(false);
+      setStep("password_entry");
       setPassword("");
       setOtp("");
       setNewPassword("");
@@ -391,7 +391,7 @@ const Login = () => {
     setLoading(true);
     try {
       const { idToken, profile } = await getGoogleAuthProfile();
-      
+
       const response = await fetch(`${API_BASE}/auth/google-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -407,30 +407,30 @@ const Login = () => {
       });
 
       const data = await response.json().catch(() => ({}));
-      
+
       // Handle errors that require mobile verification
       if (!response.ok) {
         const errorMessage = data.detail || data.message || "Google login failed";
-        
+
         // If this is a new user needing mobile verification, redirect to signup with Google
         if (errorMessage.includes("Mobile number is required") || errorMessage.includes("Mobile number not verified")) {
           toast({
             title: "Continue with Google",
             description: "This Google account is not registered. Please finish signup by verifying your mobile number.",
           });
-          
+
           // Store Google profile data for signup flow
           sessionStorage.setItem("googleAuthPending", JSON.stringify({
             idToken,
             profile,
           }));
-          
+
           // Redirect to signup so user can complete mobile verification and account creation
           navigate("/signup");
           setLoading(false);
           return;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -454,7 +454,7 @@ const Login = () => {
           description: "Welcome back.",
         });
       }
-      
+
       // Navigate to home after a brief delay
       setTimeout(() => {
         navigate("/home");

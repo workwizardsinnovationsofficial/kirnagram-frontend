@@ -19,7 +19,7 @@ type UserSummary = {
   total_remix_count?: number;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname) ? "http://127.0.0.1:8000" : "http://127.0.0.1:8000");
+const API_BASE = import.meta.env.VITE_API_BASE || (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname) ? "https://api.kirnagram.com" : "https://api.kirnagram.com");
 
 const getDisplayName = (user: UserSummary) => {
   return user.full_name || user.username || user.public_id || "Creator";
@@ -68,10 +68,10 @@ const Leaderboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const creatorsData = await creatorsRes.json();
-      
+
       if (Array.isArray(creatorsData)) {
         // Sort creators by total_remix_count
-        const sortedCreators = creatorsData.sort((a: UserSummary, b: UserSummary) => 
+        const sortedCreators = creatorsData.sort((a: UserSummary, b: UserSummary) =>
           (b.total_remix_count || 0) - (a.total_remix_count || 0)
         );
         setUserProfiles(sortedCreators);
@@ -104,10 +104,10 @@ const Leaderboard = () => {
   // Calculate creator stats using pre-calculated remix counts from backend
   const creatorStats = (Array.isArray(userProfiles) ? userProfiles : Object.values(userProfiles))
     .filter((user: any) => user.is_creator)
-    .map((creator: any, index: number) => ({ 
-      ...creator, 
+    .map((creator: any, index: number) => ({
+      ...creator,
       remixCount: creator.total_remix_count || 0,
-      rank: index + 1 
+      rank: index + 1
     }))
     .sort((a: any, b: any) => b.remixCount - a.remixCount)
     .map((creator: any, index: number) => ({ ...creator, rank: index + 1 }));
@@ -129,7 +129,7 @@ const Leaderboard = () => {
               <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary to-secondary">
                 <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
               </div>
-              
+
             </div>
           </div>
 

@@ -44,7 +44,7 @@ export function StoriesRow() {
   const [friendsStories, setFriendsStories] = useState<StoryUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<any | null>(null);
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+  const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
   const isValidRemoteImage = (url?: string) => {
     if (!url) return false;
@@ -123,7 +123,7 @@ export function StoriesRow() {
     const fetchStories = async () => {
       try {
         const user = auth.currentUser;
-        
+
         if (!user) {
           console.warn("No authenticated user found");
           setLoading(false);
@@ -131,10 +131,10 @@ export function StoriesRow() {
         }
 
         const token = await user.getIdToken();
-        
+
         // Fetch my stories separately for better control
-        const myStoriesResponse = await fetch("http://127.0.0.1:8000/stories/my-stories", {
-          headers: { 
+        const myStoriesResponse = await fetch("https://api.kirnagram.com/stories/my-stories", {
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
@@ -149,8 +149,8 @@ export function StoriesRow() {
         }
 
         // Fetch friends' stories feed (backend now includes own stories too)
-        const feedResponse = await fetch("http://127.0.0.1:8000/stories/feed", {
-          headers: { 
+        const feedResponse = await fetch("https://api.kirnagram.com/stories/feed", {
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
@@ -189,9 +189,9 @@ export function StoriesRow() {
       }
 
       const token = await user.getIdToken();
-      const response = await fetch(`http://127.0.0.1:8000/stories/delete/${storyId}`, {
+      const response = await fetch(`https://api.kirnagram.com/stories/delete/${storyId}`, {
         method: "DELETE",
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
@@ -269,7 +269,7 @@ export function StoriesRow() {
             </div>
 
             {/* Shimmer effect on hover */}
-            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" 
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
               }}
@@ -285,7 +285,7 @@ export function StoriesRow() {
       {friendsStories.map((userGroup) => {
         const firstStory = userGroup.stories[0];
         const isUnviewed = userGroup.unviewed_count > 0;
-        
+
         return (
           <div
             key={userGroup.user_id}
@@ -298,7 +298,7 @@ export function StoriesRow() {
                 background: isUnviewed
                   ? 'linear-gradient(135deg, #ec4899 0%, #f97316 50%, #eab308 100%)'
                   : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 50%, #6b7280 100%)',
-                boxShadow: isUnviewed 
+                boxShadow: isUnviewed
                   ? '0 6px 20px rgba(236, 72, 153, 0.45)'
                   : '0 3px 10px rgba(107, 114, 128, 0.25)',
               }}
@@ -321,20 +321,20 @@ export function StoriesRow() {
                     playsInline
                     preload="metadata"
                     controls={false}
-                    onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                    onMouseEnter={(e) => e.currentTarget.play().catch(() => { })}
                     onMouseLeave={(e) => {
                       e.currentTarget.pause();
                       e.currentTarget.currentTime = 0;
                     }}
                   />
                 )}
-                
+
                 {/* Subtle overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
               </div>
 
               {/* Shimmer effect on hover */}
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" 
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                 style={{
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
                 }}

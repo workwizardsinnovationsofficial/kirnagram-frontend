@@ -4,7 +4,7 @@ import { Smartphone, ArrowRight, Loader, CheckCircle } from "lucide-react";
 import kirnagramLogoText from "@/assets/kirnagram@2.png";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 const VerifyMobileGoogle = () => {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ const VerifyMobileGoogle = () => {
 
   const handleSendOtp = async () => {
     const trimmed = mobile.trim();
-    
+
     if (!trimmed) {
       toast({
         title: "Missing Mobile",
@@ -77,7 +77,7 @@ const VerifyMobileGoogle = () => {
       setMobile(normalized);
       setOtpSent(true);
       setTimer(60);
-      
+
       toast({
         title: "OTP Sent",
         description: "Verification code sent to your mobile",
@@ -126,7 +126,7 @@ const VerifyMobileGoogle = () => {
       const googleAuthData = sessionStorage.getItem("googleAuthPending");
       if (googleAuthData) {
         const { idToken, profile } = JSON.parse(googleAuthData);
-        
+
         // Now call google-login with verified mobile
         const loginResponse = await fetch(`${API_BASE}/auth/google-login`, {
           method: "POST",

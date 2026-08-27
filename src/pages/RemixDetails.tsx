@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { auth } from "@/firebase";
 import { Download, ArrowLeft } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || "http://localhost:8001";
 
 // ⏱️ REQUEST TIMEOUT (30 seconds for main requests, 15 for optional)
@@ -543,11 +543,10 @@ const RemixDetails = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        remix.review_rating === "good"
+                      className={`px-2 py-1 rounded text-xs font-semibold ${remix.review_rating === "good"
                           ? "bg-emerald-500/15 text-emerald-500"
                           : "bg-rose-500/15 text-rose-500"
-                      }`}
+                        }`}
                     >
                       {remix.review_rating === "good" ? "Good" : "Bad"} Review
                     </span>

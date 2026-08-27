@@ -6,7 +6,7 @@ import { getAuthToken } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 import { fetchPaymentHistory, type PaymentTransaction } from "@/lib/paymentApi";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 const getPayoutPerRemix = (prompt: any) => Number(prompt?.payout_per_remix ?? 1) || 1;
 
@@ -181,7 +181,7 @@ const CreatorEarnings = () => {
               <TrendingUp className="w-3 h-3" /> {totalRemixes} remixes
             </p>
           </div>
-          
+
           <div className="p-4 bg-card border border-border rounded-2xl">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
               <TrendingUp className="w-5 h-5 text-primary" />
@@ -216,11 +216,10 @@ const CreatorEarnings = () => {
                 setShowWithdraw((v) => !v);
                 setWithdrawSuccess(false);
               }}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
-                canWithdraw
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${canWithdraw
                   ? "bg-green-500 text-white hover:bg-green-600"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {showWithdraw ? "Close" : "Withdraw"}
             </button>
@@ -257,11 +256,10 @@ const CreatorEarnings = () => {
                         key={value}
                         type="button"
                         onClick={() => setAmount(value)}
-                        className={`py-2 rounded-lg border text-sm ${
-                          amount === value
+                        className={`py-2 rounded-lg border text-sm ${amount === value
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border bg-background/40 hover:bg-muted"
-                        }`}
+                          }`}
                       >
                         ₹{value}
                       </button>
@@ -413,11 +411,10 @@ const CreatorEarnings = () => {
                 key={item.key}
                 type="button"
                 onClick={() => setHistoryFilter(item.key)}
-                className={`px-3 py-1.5 rounded-full text-xs border ${
-                  historyFilter === item.key
+                className={`px-3 py-1.5 rounded-full text-xs border ${historyFilter === item.key
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-muted/40 text-muted-foreground"
-                }`}
+                  }`}
               >
                 {item.label}
               </button>
@@ -432,14 +429,14 @@ const CreatorEarnings = () => {
                 const statusIcon = req.status === "approved" || req.status === "paid"
                   ? <CheckCircle2 className="w-4 h-4 text-green-500" />
                   : req.status === "rejected"
-                  ? <XCircle className="w-4 h-4 text-red-500" />
-                  : <Clock className="w-4 h-4 text-yellow-500" />;
+                    ? <XCircle className="w-4 h-4 text-red-500" />
+                    : <Clock className="w-4 h-4 text-yellow-500" />;
 
                 const statusColor = req.status === "approved" || req.status === "paid"
                   ? "text-green-500 bg-green-500/10"
                   : req.status === "rejected"
-                  ? "text-red-500 bg-red-500/10"
-                  : "text-yellow-500 bg-yellow-500/10";
+                    ? "text-red-500 bg-red-500/10"
+                    : "text-yellow-500 bg-yellow-500/10";
 
                 const date = req.created_at ? new Date(req.created_at) : null;
                 const dateStr = date
@@ -568,7 +565,7 @@ const CreatorEarnings = () => {
           </div>
         </div>
       </div>
-    {/* Withdraw modal replaced with dropdown/collapsible */}
+      {/* Withdraw modal replaced with dropdown/collapsible */}
     </MainLayout>
   );
 };

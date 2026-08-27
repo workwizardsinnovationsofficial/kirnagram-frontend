@@ -13,7 +13,7 @@ import {
 import { auth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 const MAX_SAMPLE_IMAGES = 3;
 const CATEGORY_OPTIONS = [
   "Ghibli",
@@ -400,315 +400,312 @@ const AddNewPrompt = () => {
         </div>
 
         <div className="space-y-5">
-            <div className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4 shadow-sm">
-              <h2 className="font-semibold text-primary">Prompt Setup</h2>
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4 shadow-sm">
+            <h2 className="font-semibold text-primary">Prompt Setup</h2>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt Title</label>
-                <input
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={styleName}
-                  onChange={(event) => setStyleName(event.target.value)}
-                  placeholder="Style name"
-                />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Prompt Title</label>
+              <input
+                className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                value={styleName}
+                onChange={(event) => setStyleName(event.target.value)}
+                placeholder="Style name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Prompt Template (use {"{variable}"})</label>
+              <textarea
+                rows={6}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                value={promptTemplate}
+                onChange={(event) => setPromptTemplate(event.target.value)}
+                placeholder="A cinematic portrait of {gender} in {city}..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Prompt Description (public)</label>
+              <textarea
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                value={promptDescription}
+                onChange={(event) => setPromptDescription(event.target.value)}
+                placeholder="Short, user-facing description shown to users (avoid internal instructions)."
+              />
+              <p className="text-xs text-muted-foreground">If left empty, a safe description will be auto-generated from the template.</p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Variables (text or dropdown)</p>
+                <button
+                  type="button"
+                  onClick={addVariableToPrompt}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-background hover:bg-muted"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add
+                </button>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt Template (use {"{variable}"})</label>
-                <textarea
-                  rows={6}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={promptTemplate}
-                  onChange={(event) => setPromptTemplate(event.target.value)}
-                  placeholder="A cinematic portrait of {gender} in {city}..."
-                />
-              </div>
+              {variables.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Variables are auto-detected from prompt tokens like {"{name}"}.</p>
+              ) : (
+                <div className="space-y-2">
+                  {variables.map((entry) => (
+                    <div key={entry.id} className="space-y-2 p-3 rounded-lg border border-border bg-background">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <input
+                          value={entry.key}
+                          onChange={(event) => renameVariableInPrompt(entry.id, event.target.value)}
+                          placeholder="variable_key"
+                          className="px-3 py-2 rounded-md border border-border text-sm"
+                        />
+                        <input
+                          value={entry.label}
+                          onChange={(event) => updateVariable(entry.id, { label: event.target.value })}
+                          placeholder="Label"
+                          className="px-3 py-2 rounded-md border border-border text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <select
+                          value={entry.inputType}
+                          onChange={(event) => updateVariable(entry.id, { inputType: event.target.value as VariableInputType })}
+                          className="px-3 py-2 rounded-md border border-border text-sm"
+                        >
+                          <option value="text">Text Enter</option>
+                          <option value="dropdown">Dropdown</option>
+                        </select>
+                        {entry.inputType === "dropdown" ? (
+                          <input
+                            value={entry.optionsCsv}
+                            onChange={(event) => updateVariable(entry.id, { optionsCsv: event.target.value })}
+                            placeholder="option1,option2"
+                            className="px-3 py-2 rounded-md border border-border text-sm"
+                          />
+                        ) : (
+                          <input
+                            value={entry.placeholder}
+                            onChange={(event) => updateVariable(entry.id, { placeholder: event.target.value })}
+                            placeholder="placeholder"
+                            className="px-3 py-2 rounded-md border border-border text-sm"
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => removeVariable(entry.id)}
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-red-300 text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt Description (public)</label>
-                <textarea
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={promptDescription}
-                  onChange={(event) => setPromptDescription(event.target.value)}
-                  placeholder="Short, user-facing description shown to users (avoid internal instructions)."
-                />
-                <p className="text-xs text-muted-foreground">If left empty, a safe description will be auto-generated from the template.</p>
-              </div>
+            <p className="text-xs text-muted-foreground">
+              Note: Prompt description is auto-generated from your Prompt Template.
+            </p>
+          </div>
 
-              <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Variables (text or dropdown)</p>
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4 shadow-sm">
+            <h2 className="font-semibold text-primary">Media and Settings</h2>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ratio</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["9:16", "16:9", "1:1"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setAspectRatio(value)}
+                    className={`px-3 py-2 rounded-xl border text-xs ${aspectRatio === value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-muted/40 hover:bg-muted/60"
+                      }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sample Image (main)</label>
+              {coverPreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={coverPreview} alt="cover" className="w-full h-56 object-cover" />
                   <button
                     type="button"
-                    onClick={addVariableToPrompt}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-background hover:bg-muted"
+                    onClick={() => {
+                      setCoverFile(null);
+                      setCoverPreview(null);
+                    }}
+                    className="absolute top-2 right-2 px-2.5 py-1 text-xs rounded-md bg-background/85 border border-border"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add
+                    Remove
                   </button>
                 </div>
-
-                {variables.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Variables are auto-detected from prompt tokens like {"{name}"}.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {variables.map((entry) => (
-                      <div key={entry.id} className="space-y-2 p-3 rounded-lg border border-border bg-background">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <input
-                            value={entry.key}
-                            onChange={(event) => renameVariableInPrompt(entry.id, event.target.value)}
-                            placeholder="variable_key"
-                            className="px-3 py-2 rounded-md border border-border text-sm"
-                          />
-                          <input
-                            value={entry.label}
-                            onChange={(event) => updateVariable(entry.id, { label: event.target.value })}
-                            placeholder="Label"
-                            className="px-3 py-2 rounded-md border border-border text-sm"
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <select
-                            value={entry.inputType}
-                            onChange={(event) => updateVariable(entry.id, { inputType: event.target.value as VariableInputType })}
-                            className="px-3 py-2 rounded-md border border-border text-sm"
-                          >
-                            <option value="text">Text Enter</option>
-                            <option value="dropdown">Dropdown</option>
-                          </select>
-                          {entry.inputType === "dropdown" ? (
-                            <input
-                              value={entry.optionsCsv}
-                              onChange={(event) => updateVariable(entry.id, { optionsCsv: event.target.value })}
-                              placeholder="option1,option2"
-                              className="px-3 py-2 rounded-md border border-border text-sm"
-                            />
-                          ) : (
-                            <input
-                              value={entry.placeholder}
-                              onChange={(event) => updateVariable(entry.id, { placeholder: event.target.value })}
-                              placeholder="placeholder"
-                              className="px-3 py-2 rounded-md border border-border text-sm"
-                            />
-                          )}
-                        </div>
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            type="button"
-                            onClick={() => removeVariable(entry.id)}
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-md border border-red-300 text-red-500"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Note: Prompt description is auto-generated from your Prompt Template.
-              </p>
+              ) : (
+                <label className="flex h-40 items-center justify-center rounded-xl border-2 border-dashed border-border cursor-pointer hover:bg-muted/30 transition-colors">
+                  <span className="text-sm text-muted-foreground">Upload sample image</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={onCoverUpload} />
+                </label>
+              )}
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4 shadow-sm">
-              <h2 className="font-semibold text-primary">Media and Settings</h2>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ratio</label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium">More Sample Images (up to 3)</label>
+                <label className="text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
+                  Upload
+                  <input type="file" accept="image/*" multiple onChange={onSampleUpload} className="hidden" />
+                </label>
+              </div>
+              {samplePreviews.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
-                  {(["9:16", "16:9", "1:1"] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setAspectRatio(value)}
-                      className={`px-3 py-2 rounded-xl border text-xs ${
-                        aspectRatio === value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-muted/40 hover:bg-muted/60"
-                      }`}
-                    >
-                      {value}
-                    </button>
+                  {samplePreviews.map((preview, index) => (
+                    <img key={index} src={preview} alt={`sample-${index}`} className="w-full h-24 object-cover rounded-lg border border-border" />
                   ))}
                 </div>
-              </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">No extra sample images uploaded yet.</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Sample Image (main)</label>
-                {coverPreview ? (
-                  <div className="relative rounded-xl overflow-hidden border border-border">
-                    <img src={coverPreview} alt="cover" className="w-full h-56 object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCoverFile(null);
-                        setCoverPreview(null);
-                      }}
-                      className="absolute top-2 right-2 px-2.5 py-1 text-xs rounded-md bg-background/85 border border-border"
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category</label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="w-full h-12 rounded-xl border-primary/35 bg-muted/40 focus:ring-primary/30 data-[state=open]:border-primary data-[state=open]:bg-primary/5">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-primary/35 bg-card">
+                  {CATEGORY_OPTIONS.map((item) => (
+                    <SelectItem
+                      key={item}
+                      value={item}
+                      className="rounded-md focus:bg-primary/15 focus:text-primary data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary"
                     >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex h-40 items-center justify-center rounded-xl border-2 border-dashed border-border cursor-pointer hover:bg-muted/30 transition-colors">
-                    <span className="text-sm text-muted-foreground">Upload sample image</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={onCoverUpload} />
-                  </label>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium">More Sample Images (up to 3)</label>
-                  <label className="text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
-                    Upload
-                    <input type="file" accept="image/*" multiple onChange={onSampleUpload} className="hidden" />
-                  </label>
-                </div>
-                {samplePreviews.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {samplePreviews.map((preview, index) => (
-                      <img key={index} src={preview} alt={`sample-${index}`} className="w-full h-24 object-cover rounded-lg border border-border" />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No extra sample images uploaded yet.</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full h-12 rounded-xl border-primary/35 bg-muted/40 focus:ring-primary/30 data-[state=open]:border-primary data-[state=open]:bg-primary/5">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/35 bg-card">
-                    {CATEGORY_OPTIONS.map((item) => (
-                      <SelectItem
-                        key={item}
-                        value={item}
-                        className="rounded-md focus:bg-primary/15 focus:text-primary data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary"
-                      >
-                        {item}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="__custom__">Other (type your own)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {category === "__custom__" && (
-                  <input
-                    type="text"
-                    value={customCategory}
-                    onChange={e => setCustomCategory(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 mt-2"
-                    placeholder="Enter custom category"
-                  />
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags</label>
+                      {item}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__custom__">Other (type your own)</SelectItem>
+                </SelectContent>
+              </Select>
+              {category === "__custom__" && (
                 <input
-                  value={tags}
-                  onChange={(event) => setTags(event.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="tag1, tag2, tag3"
+                  type="text"
+                  value={customCategory}
+                  onChange={e => setCustomCategory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30 mt-2"
+                  placeholder="Enter custom category"
                 />
-              </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tags</label>
+              <input
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="tag1, tag2, tag3"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">AI Model</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: "ChatGPT", value: "chatgpt" as const },
-                    { label: "Gemini", value: "gemini" as const },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setAiModel(option.value)}
-                      className={`px-3 py-2.5 rounded-xl border text-sm ${
-                        aiModel === option.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-muted/40 hover:bg-muted/60"
+            <div className="space-y-2">
+              <label className="text-sm font-medium">AI Model</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "ChatGPT", value: "chatgpt" as const },
+                  { label: "Gemini", value: "gemini" as const },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setAiModel(option.value)}
+                    className={`px-3 py-2.5 rounded-xl border text-sm ${aiModel === option.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-muted/40 hover:bg-muted/60"
                       }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Reference Image Strategy</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {[
-                    { value: "none" as const, label: "No reference strategy" },
-                    { value: "correct-vs-wrong" as const, label: "Correct and Wrong reference images" },
-                  ].map((item) => (
-                    <button
-                      key={item.value}
-                      type="button"
-                      onClick={() => setReferenceStrategy(item.value)}
-                      className={`px-3 py-2.5 rounded-xl border text-sm text-left ${
-                        referenceStrategy === item.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-muted/40 hover:bg-muted/60"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-
-                {referenceStrategy === "correct-vs-wrong" && (
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-border p-3 bg-muted/20 space-y-2">
-                      <p className="text-xs font-medium text-emerald-500">Correct references (up to 3)</p>
-                      <label className="inline-flex text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
-                        Upload
-                        <input type="file" multiple accept="image/*" onChange={(event) => onReferenceUpload(event, "correct")} className="hidden" />
-                      </label>
-                      <p className="text-[11px] text-muted-foreground">Selected: {referenceCorrectFiles.length}</p>
-                      {referenceCorrectFiles.length > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          {referenceCorrectFiles.map((file, idx) => (
-                            <img
-                              key={idx}
-                              src={URL.createObjectURL(file)}
-                              alt={`Correct reference ${idx + 1}`}
-                              className="w-16 h-16 object-cover rounded border border-emerald-400"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="rounded-xl border border-border p-3 bg-muted/20 space-y-2">
-                      <p className="text-xs font-medium text-red-500">Wrong references (up to 3)</p>
-                      <label className="inline-flex text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
-                        Upload
-                        <input type="file" multiple accept="image/*" onChange={(event) => onReferenceUpload(event, "wrong")} className="hidden" />
-                      </label>
-                      <p className="text-[11px] text-muted-foreground">Selected: {referenceWrongFiles.length}</p>
-                      {referenceWrongFiles.length > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          {referenceWrongFiles.map((file, idx) => (
-                            <img
-                              key={idx}
-                              src={URL.createObjectURL(file)}
-                              alt={`Wrong reference ${idx + 1}`}
-                              className="w-16 h-16 object-cover rounded border border-red-400"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reference Image Strategy</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { value: "none" as const, label: "No reference strategy" },
+                  { value: "correct-vs-wrong" as const, label: "Correct and Wrong reference images" },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setReferenceStrategy(item.value)}
+                    className={`px-3 py-2.5 rounded-xl border text-sm text-left ${referenceStrategy === item.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-muted/40 hover:bg-muted/60"
+                      }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {referenceStrategy === "correct-vs-wrong" && (
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-border p-3 bg-muted/20 space-y-2">
+                    <p className="text-xs font-medium text-emerald-500">Correct references (up to 3)</p>
+                    <label className="inline-flex text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
+                      Upload
+                      <input type="file" multiple accept="image/*" onChange={(event) => onReferenceUpload(event, "correct")} className="hidden" />
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">Selected: {referenceCorrectFiles.length}</p>
+                    {referenceCorrectFiles.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {referenceCorrectFiles.map((file, idx) => (
+                          <img
+                            key={idx}
+                            src={URL.createObjectURL(file)}
+                            alt={`Correct reference ${idx + 1}`}
+                            className="w-16 h-16 object-cover rounded border border-emerald-400"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-xl border border-border p-3 bg-muted/20 space-y-2">
+                    <p className="text-xs font-medium text-red-500">Wrong references (up to 3)</p>
+                    <label className="inline-flex text-xs px-2 py-1 rounded-md border border-border bg-muted/40 cursor-pointer hover:bg-muted/60">
+                      Upload
+                      <input type="file" multiple accept="image/*" onChange={(event) => onReferenceUpload(event, "wrong")} className="hidden" />
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">Selected: {referenceWrongFiles.length}</p>
+                    {referenceWrongFiles.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {referenceWrongFiles.map((file, idx) => (
+                          <img
+                            key={idx}
+                            src={URL.createObjectURL(file)}
+                            alt={`Wrong reference ${idx + 1}`}
+                            className="w-16 h-16 object-cover rounded border border-red-400"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <aside className="space-y-4">
             <div className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-3 shadow-sm">
               <h3 className="font-semibold text-foreground">Publishing Summary</h3>

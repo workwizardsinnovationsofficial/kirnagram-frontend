@@ -30,7 +30,7 @@ import creatorLog1o from "@/assets/ai-creator-icon-2.png";
 import { auth } from "@/firebase";
 import { useEffect, useRef, useState } from "react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || API_BASE;
 
 const tabs = [

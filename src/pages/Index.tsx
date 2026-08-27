@@ -17,7 +17,7 @@ import profileIcon from "@/assets/profileicon.png";
 import creatorLogo from "@/assets/ai-creator-icon-2.png";
 import SuggestedUsers from "@/components/feed/SuggestedUsers";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const FEED_CACHE_KEY = "kirnagram:home-feed-cache";
 const FEED_SCROLL_KEY = "kirnagram:home-feed-scroll";
 const ADSENSE_CLIENT = "ca-pub-4174888959110856";
@@ -108,10 +108,10 @@ function FeedKirnagramAd({ placement = "home_banner" }: { placement?: string }) 
         const items = Array.isArray(data?.items)
           ? data.items
           : Array.isArray(data?.ads)
-          ? data.ads
-          : Array.isArray(data)
-          ? data
-          : [];
+            ? data.ads
+            : Array.isArray(data)
+              ? data
+              : [];
         if (mounted) setAd(items.length ? items[Math.floor(Math.random() * items.length)] : null);
       } catch (e) {
         if (mounted) setAd(null);
@@ -159,7 +159,7 @@ const Index = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  
+
   const [userProfiles, setUserProfiles] = useState<Record<string, UserSummary>>({});
   const [followStatusByUser, setFollowStatusByUser] = useState<Record<string, "none" | "requested" | "following">>({});
   const [followBusyByUser, setFollowBusyByUser] = useState<Record<string, boolean>>({});
@@ -222,7 +222,7 @@ const Index = () => {
       });
       if (!res.ok) throw new Error("Failed to load feed");
       const data = await res.json();
-      
+
       // 🎯 HANDLE: Backend returns {posts, pagination} structure
       const allPosts = data.posts && Array.isArray(data.posts) ? data.posts : [];
       const paginationData = data.pagination || {};
@@ -398,11 +398,11 @@ const Index = () => {
 
     setLoadingMore(true);
     const user = auth.currentUser;
-    
+
     try {
       const nextPage = currentPage + 1;
       const token = await user?.getIdToken();
-      
+
       if (!token) throw new Error("User not authenticated");
 
       console.log(`📜 [loadMorePosts] Fetching page ${nextPage} with ${POSTS_PER_PAGE} posts per page...`);
@@ -414,7 +414,7 @@ const Index = () => {
       );
 
       if (!res.ok) throw new Error("Failed to load more posts");
-      
+
       const data = await res.json();
       const newPosts = data.posts && Array.isArray(data.posts) ? data.posts : [];
       const paginationData = data.pagination || {};
@@ -771,7 +771,7 @@ const Index = () => {
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-6 overflow-x-hidden overflow-y-hidden scrollbar-hide">
-       
+
 
         {/* Hero Banner */}
         <HeroBanner />
@@ -818,8 +818,8 @@ const Index = () => {
                         post.type === "video" || isVideo
                           ? "video"
                           : post.type === "text" || (!post.image_url && !post.video_url)
-                          ? "text"
-                          : "image"
+                            ? "text"
+                            : "image"
                       }
                       ratio={post.ratio}
                       caption={post.caption}
@@ -861,7 +861,7 @@ const Index = () => {
                       followState={followStatusByUser[post.user_id] || "none"}
                       followLoading={Boolean(followBusyByUser[post.user_id])}
                       onToggleFollow={() => handleToggleFollow(post.user_id)}
-                      // Pass global mute state to FeedPost (if it supports it)
+                    // Pass global mute state to FeedPost (if it supports it)
                     />
                   </div>
 

@@ -7,7 +7,7 @@ import { useNotificationStore } from "@/store/notificationStore";
 import kirnagramLogo from "@/assets/kirnagramlogo.png";
 import { fetchCreditsSummary } from "@/lib/creditsApi";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 export function Header() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -143,7 +143,7 @@ export function Header() {
           </button>
 
           {/* Notifications - visible on all screens */}
-          <button 
+          <button
             onClick={() => navigate("/notifications")}
             className="relative p-2 hover:bg-muted rounded-lg transition-colors group flex items-center justify-center"
             title="View notifications"
@@ -167,8 +167,8 @@ export function Header() {
               {creditsBalance ?? "--"}
             </span>
           </button>
-          
-          
+
+
         </div>
       </div>
 

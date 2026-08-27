@@ -74,7 +74,7 @@ const getHandle = (user?: { username?: string; public_id?: string }) => {
       ? String(user?.public_id).trim().toUpperCase()
       : hasIdentityValue(user?.username)
         ? String(user?.username).trim()
-      : 'user';
+        : 'user';
   return base.startsWith('@') ? base : `@${base}`;
 };
 
@@ -133,7 +133,7 @@ const StoryView: React.FC = () => {
     if (isValidRemoteImage(currentUser?.user_image)) {
       return currentUser.user_image;
     }
-    
+
     // Fallback to gender-based icon
     if (currentUser?.gender === "male") return maleIcon;
     if (currentUser?.gender === "female") return femaleIcon;
@@ -161,37 +161,37 @@ const StoryView: React.FC = () => {
           return;
         }
         const token = await user.getIdToken();
-        
+
         // Check if we're viewing a specific user's story (from profile)
         const targetUserId = (location.state as any)?.userId;
-        
+
         if (targetUserId) {
           // Fetch the specific user's stories with full details
           try {
-            const userStoriesResponse = await fetch(`http://127.0.0.1:8000/stories/user/${targetUserId}/stories`, {
+            const userStoriesResponse = await fetch(`https://api.kirnagram.com/stories/user/${targetUserId}/stories`, {
               headers: { 'Authorization': `Bearer ${token}` },
             });
-            
+
             if (userStoriesResponse.ok) {
               const targetUserData = await userStoriesResponse.json();
-              
+
               if (targetUserData.stories && targetUserData.stories.length > 0) {
                 // Fetch the full feed to include other users' stories
-                const feedResponse = await fetch('http://127.0.0.1:8000/stories/feed', {
+                const feedResponse = await fetch('https://api.kirnagram.com/stories/feed', {
                   headers: { 'Authorization': `Bearer ${token}` },
                 });
-                
+
                 let allFeedData: any[] = [];
                 if (feedResponse.ok) {
                   allFeedData = await feedResponse.json();
                 }
-                
+
                 // Remove target user from feed if present (to avoid duplicates)
                 const otherStories = allFeedData.filter((u: any) => u.user_id !== targetUserId);
-                
+
                 // Place target user's stories at the front
                 setStoryUsers([targetUserData, ...otherStories]);
-                
+
                 // Find the specific story if storyId provided
                 if (storyId) {
                   const storyIdx = targetUserData.stories.findIndex((s: any) => s.story_id === storyId);
@@ -204,7 +204,7 @@ const StoryView: React.FC = () => {
                     return;
                   }
                 }
-                
+
                 // No specific storyId, just show first story of target user
                 setCurrentUserIdx(0);
                 setCurrentStoryIdx(0);
@@ -228,22 +228,22 @@ const StoryView: React.FC = () => {
             console.error('Error fetching user stories:', error);
           }
         }
-        
+
         // Fetch the main stories feed (default behavior)
-        const response = await fetch('http://127.0.0.1:8000/stories/feed', {
+        const response = await fetch('https://api.kirnagram.com/stories/feed', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error(`Feed fetch failed ${response.status}:`, errorData);
           setLoading(false);
           return;
         }
-        
+
         const data = await response.json();
         setStoryUsers(data);
-        
+
         // If viewing a specific story by ID, find it
         if (storyId) {
           for (let i = 0; i < data.length; i++) {
@@ -258,7 +258,7 @@ const StoryView: React.FC = () => {
               }
             }
           }
-          
+
           // Story ID not found in feed
           console.warn(`Story ${storyId} not found in feed`);
           toast({
@@ -267,7 +267,7 @@ const StoryView: React.FC = () => {
             variant: "destructive"
           });
         }
-        
+
         // Default to first story
         if (data.length > 0) {
           setIsLiked(data[0]?.stories[0]?.liked_by_user || false);
@@ -276,7 +276,7 @@ const StoryView: React.FC = () => {
           // No stories available
           navigate('/');
         }
-        
+
       } catch (error) {
         console.error('Error fetching stories:', error);
         toast({
@@ -301,12 +301,12 @@ const StoryView: React.FC = () => {
           const user = auth.currentUser;
           if (!user) return;
           const token = await user.getIdToken();
-          
-          const response = await fetch(`http://127.0.0.1:8000/stories/view/${currentStory.story_id}`, {
+
+          const response = await fetch(`https://api.kirnagram.com/stories/view/${currentStory.story_id}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
           });
-          
+
           if (response.status === 403) {
             // Privacy violation - not allowed to view this story
             const errorData = await response.json().catch(() => ({}));
@@ -319,7 +319,7 @@ const StoryView: React.FC = () => {
             navigate('/');
             return;
           }
-          
+
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error(`View tracking failed ${response.status}:`, errorData);
@@ -336,38 +336,38 @@ const StoryView: React.FC = () => {
   useEffect(() => {
     if (currentStory && currentUser) {
       const isCurrentUserOwner = currentUser.user_id === storyUsers[0]?.user_id && currentStoryIdx === 0;
-      
+
       const fetchStats = async () => {
         try {
           const user = auth.currentUser;
           if (!user) return;
-          
+
           // Double-check that this is the current user's story
           if (user.uid !== currentUser.user_id) {
             setViewers([]);
             setLikers([]);
             return;
           }
-          
+
           const token = await user.getIdToken();
-          
-          const response = await fetch(`http://127.0.0.1:8000/stories/stats/${currentStory.story_id}`, {
+
+          const response = await fetch(`https://api.kirnagram.com/stories/stats/${currentStory.story_id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
-          
+
           if (response.status === 403) {
             // Not allowed to view stats for this story - clear the data
             setViewers([]);
             setLikers([]);
             return;
           }
-          
+
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error(`Stats fetch failed ${response.status}:`, errorData);
             return;
           }
-          
+
           const data = await response.json();
           setViewers(data.viewers);
           setLikers(data.likers || []);
@@ -375,7 +375,7 @@ const StoryView: React.FC = () => {
           console.error('Error fetching stats:', error);
         }
       };
-      
+
       if (isOwnStory) {
         fetchStats();
       } else {
@@ -405,7 +405,7 @@ const StoryView: React.FC = () => {
     progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min((elapsed / duration) * 100, 100);
-      
+
       if (progressRef.current) {
         progressRef.current.style.width = `${progress}%`;
       }
@@ -474,8 +474,8 @@ const StoryView: React.FC = () => {
         return;
       }
       const token = await user.getIdToken();
-      
-      const response = await fetch(`http://127.0.0.1:8000/stories/like/${currentStory.story_id}`, {
+
+      const response = await fetch(`https://api.kirnagram.com/stories/like/${currentStory.story_id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -504,7 +504,7 @@ const StoryView: React.FC = () => {
 
       const newLikedState = !isLiked;
       setIsLiked(newLikedState);
-      
+
       // UI-only state update; no toast notification
     } catch (error) {
       console.error('Error liking story:', error);
@@ -518,7 +518,7 @@ const StoryView: React.FC = () => {
 
   const handleDeleteStory = async () => {
     if (!currentStory) return;
-    
+
     setShowDeleteConfirm(false);
 
     try {
@@ -532,8 +532,8 @@ const StoryView: React.FC = () => {
         return;
       }
       const token = await user.getIdToken();
-      
-      const response = await fetch(`http://127.0.0.1:8000/stories/delete/${currentStory.story_id}`, {
+
+      const response = await fetch(`https://api.kirnagram.com/stories/delete/${currentStory.story_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -553,7 +553,7 @@ const StoryView: React.FC = () => {
         title: "Story deleted ✓",
         description: "Your story has been removed",
       });
-      
+
       setTimeout(() => navigate('/'), 500);
     } catch (error) {
       console.error('Error deleting story:', error);
@@ -569,12 +569,12 @@ const StoryView: React.FC = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
-    
+
     // Reset progress bar to 0%
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
     }
-    
+
     // Reset video to beginning
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
@@ -595,12 +595,12 @@ const StoryView: React.FC = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
-    
+
     // Reset progress bar to 0%
     if (progressRef.current) {
       progressRef.current.style.width = '0%';
     }
-    
+
     // Reset video to beginning
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
@@ -645,291 +645,290 @@ const StoryView: React.FC = () => {
       </div>
     );
   }
-return (
-  <div className="h-screen bg-black flex items-center justify-center relative overflow-hidden">
+  return (
+    <div className="h-screen bg-black flex items-center justify-center relative overflow-hidden">
 
-    {/* Desktop Blur Background */}
-    <div
-      className="hidden lg:block absolute inset-0 bg-cover bg-center blur-3xl scale-110 opacity-30"
-      style={{ backgroundImage: `url(${currentStory.media_url})` }}
-    />
+      {/* Desktop Blur Background */}
+      <div
+        className="hidden lg:block absolute inset-0 bg-cover bg-center blur-3xl scale-110 opacity-30"
+        style={{ backgroundImage: `url(${currentStory.media_url})` }}
+      />
 
-    {/* Story Card */}
-    <div className="relative w-full h-full lg:max-w-md lg:aspect-[9/16] bg-black lg:rounded-2xl overflow-hidden shadow-2xl">
+      {/* Story Card */}
+      <div className="relative w-full h-full lg:max-w-md lg:aspect-[9/16] bg-black lg:rounded-2xl overflow-hidden shadow-2xl">
 
-      {/* Progress Bars */}
-      <div className="flex gap-1 px-2 pt-2 pb-1 absolute top-0 left-0 right-0 z-40">
-        {currentUser?.stories.map((_, idx) => (
-          <div key={idx} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-            {idx < currentStoryIdx ? (
-              <div className="w-full h-full bg-white"></div>
-            ) : idx === currentStoryIdx ? (
-              <div ref={progressRef} className="h-full bg-white" style={{ width: '0%' }}></div>
-            ) : (
-              <div className="w-0 h-full bg-white"></div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Header */}
-      <div className="flex justify-between items-center px-4 py-3 absolute top-3 left-0 right-0 z-30 bg-gradient-to-b from-black/60 to-transparent">
-        <div
-          className="flex items-center gap-3 cursor-pointer"
-          onClick={() => currentUser?.user_id && navigate(`/user/${currentUser.user_id}`)}
-        >
-          <img
-            src={getProfileImage()}
-            alt={getDisplayName(currentUser)}
-            className="w-10 h-10 rounded-full border-2 border-white object-cover"
-          />
-          <div className="flex flex-col">
-            <p className="text-gray-900 dark:text-white font-semibold text-sm leading-tight">
-              {getDisplayName(currentUser)}
-            </p>
-            <p className="text-gray-900 dark:text-white/80 text-xs leading-tight">
-              {timeString}
-            </p>
-          </div>
+        {/* Progress Bars */}
+        <div className="flex gap-1 px-2 pt-2 pb-1 absolute top-0 left-0 right-0 z-40">
+          {currentUser?.stories.map((_, idx) => (
+            <div key={idx} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+              {idx < currentStoryIdx ? (
+                <div className="w-full h-full bg-white"></div>
+              ) : idx === currentStoryIdx ? (
+                <div ref={progressRef} className="h-full bg-white" style={{ width: '0%' }}></div>
+              ) : (
+                <div className="w-0 h-full bg-white"></div>
+              )}
+            </div>
+          ))}
         </div>
 
-        <button
-          onClick={() => navigate('/explore')}
-          className="text-gray-900 dark:text-white hover:bg-white/20 p-2 rounded-full transition"
-        >
-          <X size={24} />
-        </button>
-      </div>
-
-      {/* Story Media */}
-      <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
-
-        {/* Tap Areas */}
-        <div className="absolute left-0 top-0 bottom-0 w-1/3 z-10 cursor-pointer" onClick={handlePrevStory} />
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 z-10 cursor-pointer" onClick={handleNextStory} />
-
-        {currentStory.media_type === 'image' ? (
-          <img
-            src={currentStory.media_url}
-            alt="Story"
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src={currentStory.media_url}
-            className="w-full h-full object-contain"
-            autoPlay
-            muted
-            playsInline
-            onCanPlay={() => videoRef.current?.play().catch(() => {})}
-            onEnded={handleNextStory}
-          />
-        )}
-
-        {/* Text Overlay */}
-        {currentStory.text && (
+        {/* Header */}
+        <div className="flex justify-between items-center px-4 py-3 absolute top-3 left-0 right-0 z-30 bg-gradient-to-b from-black/60 to-transparent">
           <div
-            className="absolute inset-0 flex items-center justify-center text-gray-900 dark:text-white text-2xl md:text-3xl font-bold text-center px-4 z-20"
-            style={{
-              textShadow:
-                '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5)',
-            }}
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => currentUser?.user_id && navigate(`/user/${currentUser.user_id}`)}
           >
-            {currentStory.text}
+            <img
+              src={getProfileImage()}
+              alt={getDisplayName(currentUser)}
+              className="w-10 h-10 rounded-full border-2 border-white object-cover"
+            />
+            <div className="flex flex-col">
+              <p className="text-gray-900 dark:text-white font-semibold text-sm leading-tight">
+                {getDisplayName(currentUser)}
+              </p>
+              <p className="text-gray-900 dark:text-white/80 text-xs leading-tight">
+                {timeString}
+              </p>
+            </div>
           </div>
-        )}
 
-        {/* Emoji Stickers */}
-        {currentStory.emoji_stickers?.map((sticker, idx) => (
-          <div
-            key={idx}
-            className="absolute text-4xl pointer-events-none z-20"
-            style={{
-              left: `${sticker.x}%`,
-              top: `${sticker.y}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
+          <button
+            onClick={() => navigate('/explore')}
+            className="text-gray-900 dark:text-white hover:bg-white/20 p-2 rounded-full transition"
           >
-            {sticker.emoji}
-          </div>
-        ))}
-      </div>
+            <X size={24} />
+          </button>
+        </div>
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 py-6 pb-8 z-30">
-        {isOwnStory ? (
-          <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-3 rounded-full shadow-lg">
-            <button
-              onClick={() => setShowViewers(!showViewers)}
-              className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
+        {/* Story Media */}
+        <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
+
+          {/* Tap Areas */}
+          <div className="absolute left-0 top-0 bottom-0 w-1/3 z-10 cursor-pointer" onClick={handlePrevStory} />
+          <div className="absolute right-0 top-0 bottom-0 w-1/3 z-10 cursor-pointer" onClick={handleNextStory} />
+
+          {currentStory.media_type === 'image' ? (
+            <img
+              src={currentStory.media_url}
+              alt="Story"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={currentStory.media_url}
+              className="w-full h-full object-contain"
+              autoPlay
+              muted
+              playsInline
+              onCanPlay={() => videoRef.current?.play().catch(() => { })}
+              onEnded={handleNextStory}
+            />
+          )}
+
+          {/* Text Overlay */}
+          {currentStory.text && (
+            <div
+              className="absolute inset-0 flex items-center justify-center text-gray-900 dark:text-white text-2xl md:text-3xl font-bold text-center px-4 z-20"
+              style={{
+                textShadow:
+                  '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.5)',
+              }}
             >
-              <Eye size={18} />
-              <span>{currentStory.views_count}</span>
-            </button>
+              {currentStory.text}
+            </div>
+          )}
 
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
+          {/* Emoji Stickers */}
+          {currentStory.emoji_stickers?.map((sticker, idx) => (
+            <div
+              key={idx}
+              className="absolute text-4xl pointer-events-none z-20"
+              style={{
+                left: `${sticker.x}%`,
+                top: `${sticker.y}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
             >
-              <Trash2 size={18} />
-              Delete
-            </button>
+              {sticker.emoji}
+            </div>
+          ))}
+        </div>
 
-            <button
-              onClick={() => navigate("/story/upload")}
-              className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
-            >
-              <Plus size={18} />
-              Add
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-end gap-4">
-            {likers.length > 0 && (
-              <div className="flex items-center -space-x-2">
-                {likers.slice(0, 3).map((liker, idx) => (
-                  <img
-                    key={liker.user_id}
-                    src={getUserAvatar(liker)}
-                    alt={liker.username}
-                    className="w-8 h-8 rounded-full border-2 border-black object-cover cursor-pointer"
-                    onClick={() => liker.user_id && navigate(`/user/${liker.user_id}`)}
-                    style={{ zIndex: 3 - idx }}
-                  />
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={handleLike}
-              className={`transition transform hover:scale-110 ${
-                isLiked ? 'text-red-500' : 'text-gray-900 dark:text-white'
-              }`}
-            >
-              <Heart size={32} fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* Viewers Modal */}
-    {showViewers && (
-  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-    <div className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full mx-4 max-h-96 overflow-y-auto">
-
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-gray-900 dark:text-white font-bold text-lg">
-          {showingLikes ? `${likers.length} Likes` : 'Who viewed your story'}
-        </h3>
-
-        <button
-          onClick={() => {
-            setShowViewers(false);
-            setShowingLikes(false);
-          }}
-          className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {showingLikes ? (
-        likers.length > 0 ? (
-          <div className="space-y-3">
-            {likers.map((liker) => (
-              <div
-                key={liker.user_id}
-                className="flex items-center gap-3 hover:bg-gray-800 p-2 rounded-lg transition cursor-pointer"
-                onClick={() => {
-                  navigate(`/user/${liker.user_id}`);
-                  setShowViewers(false);
-                }}
+        {/* Bottom Controls */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 py-6 pb-8 z-30">
+          {isOwnStory ? (
+            <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-orange-500 to-yellow-500 px-4 py-3 rounded-full shadow-lg">
+              <button
+                onClick={() => setShowViewers(!showViewers)}
+                className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
               >
-                <img
-                  src={getUserAvatar(liker)}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-gray-900 dark:text-white text-sm font-semibold">
-                    {getDisplayName(liker)}
-                  </p>
-                  <p className="text-gray-900 dark:text-white/50 text-xs">
-                    Liked your story
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm text-center py-8">
-            No likes yet
-          </p>
-        )
-      ) : (
-        viewers.length > 0 ? (
-          <div className="space-y-3">
-            {viewers.map((viewer) => (
-              <div
-                key={viewer.user_id}
-                className="flex items-center gap-3 hover:bg-gray-800 p-2 rounded-lg transition cursor-pointer"
-                onClick={() => {
-                  navigate(`/user/${viewer.user_id}`);
-                  setShowViewers(false);
-                }}
-              >
-                <img
-                  src={getUserAvatar(viewer)}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-gray-900 dark:text-white text-sm font-semibold">
-                    {getDisplayName(viewer)}
-                  </p>
-                  <p className="text-gray-900 dark:text-white/50 text-xs">
-                    Viewed your story
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm text-center py-8">
-            No one has viewed your story yet
-          </p>
-        )
-      )}
-
-    </div>
-  </div>
-)}
-
-    {/* Delete Modal */}
-    {showDeleteConfirm && (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full mx-4">
-          <div className="text-center">
-            <Trash2 size={32} className="text-red-500 mx-auto mb-4" />
-            <h3 className="text-gray-900 dark:text-white font-bold text-xl mb-2">Delete Story?</h3>
-            <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-6">
-              This story will be permanently deleted.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 bg-gray-700 py-3 rounded-lg">
-                Cancel
+                <Eye size={18} />
+                <span>{currentStory.views_count}</span>
               </button>
-              <button onClick={handleDeleteStory} className="flex-1 bg-red-500 py-3 rounded-lg">
+
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
+              >
+                <Trash2 size={18} />
                 Delete
               </button>
+
+              <button
+                onClick={() => navigate("/story/upload")}
+                className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold text-sm"
+              >
+                <Plus size={18} />
+                Add
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-4">
+              {likers.length > 0 && (
+                <div className="flex items-center -space-x-2">
+                  {likers.slice(0, 3).map((liker, idx) => (
+                    <img
+                      key={liker.user_id}
+                      src={getUserAvatar(liker)}
+                      alt={liker.username}
+                      className="w-8 h-8 rounded-full border-2 border-black object-cover cursor-pointer"
+                      onClick={() => liker.user_id && navigate(`/user/${liker.user_id}`)}
+                      style={{ zIndex: 3 - idx }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={handleLike}
+                className={`transition transform hover:scale-110 ${isLiked ? 'text-red-500' : 'text-gray-900 dark:text-white'
+                  }`}
+              >
+                <Heart size={32} fill={isLiked ? 'currentColor' : 'none'} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Viewers Modal */}
+      {showViewers && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full mx-4 max-h-96 overflow-y-auto">
+
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-gray-900 dark:text-white font-bold text-lg">
+                {showingLikes ? `${likers.length} Likes` : 'Who viewed your story'}
+              </h3>
+
+              <button
+                onClick={() => {
+                  setShowViewers(false);
+                  setShowingLikes(false);
+                }}
+                className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {showingLikes ? (
+              likers.length > 0 ? (
+                <div className="space-y-3">
+                  {likers.map((liker) => (
+                    <div
+                      key={liker.user_id}
+                      className="flex items-center gap-3 hover:bg-gray-800 p-2 rounded-lg transition cursor-pointer"
+                      onClick={() => {
+                        navigate(`/user/${liker.user_id}`);
+                        setShowViewers(false);
+                      }}
+                    >
+                      <img
+                        src={getUserAvatar(liker)}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="text-gray-900 dark:text-white text-sm font-semibold">
+                          {getDisplayName(liker)}
+                        </p>
+                        <p className="text-gray-900 dark:text-white/50 text-xs">
+                          Liked your story
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+                  No likes yet
+                </p>
+              )
+            ) : (
+              viewers.length > 0 ? (
+                <div className="space-y-3">
+                  {viewers.map((viewer) => (
+                    <div
+                      key={viewer.user_id}
+                      className="flex items-center gap-3 hover:bg-gray-800 p-2 rounded-lg transition cursor-pointer"
+                      onClick={() => {
+                        navigate(`/user/${viewer.user_id}`);
+                        setShowViewers(false);
+                      }}
+                    >
+                      <img
+                        src={getUserAvatar(viewer)}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="text-gray-900 dark:text-white text-sm font-semibold">
+                          {getDisplayName(viewer)}
+                        </p>
+                        <p className="text-gray-900 dark:text-white/50 text-xs">
+                          Viewed your story
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+                  No one has viewed your story yet
+                </p>
+              )
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full mx-4">
+            <div className="text-center">
+              <Trash2 size={32} className="text-red-500 mx-auto mb-4" />
+              <h3 className="text-gray-900 dark:text-white font-bold text-xl mb-2">Delete Story?</h3>
+              <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-6">
+                This story will be permanently deleted.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 bg-gray-700 py-3 rounded-lg">
+                  Cancel
+                </button>
+                <button onClick={handleDeleteStory} className="flex-1 bg-red-500 py-3 rounded-lg">
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-  </div>
-);
+    </div>
+  );
 };
 
 export default StoryView;

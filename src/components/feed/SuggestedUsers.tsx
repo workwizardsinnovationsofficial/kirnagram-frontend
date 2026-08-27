@@ -5,7 +5,7 @@ import maleIcon from "@/assets/maleicon.png";
 import femaleIcon from "@/assets/femaleicon.png";
 import profileIcon from "@/assets/profileicon.png";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 
 type SuggestedUser = {
   firebase_uid: string;

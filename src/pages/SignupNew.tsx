@@ -6,7 +6,7 @@ import heroBanner from "@/assets/hero-banner.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleAuthProfile, setAuthSession } from "@/firebase";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.kirnagram.com";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -489,14 +489,14 @@ const SignupNew = () => {
         body: JSON.stringify(
           googleFlow
             ? {
-                id_token: googleProfile?.idToken,
-                full_name: fullName,
-                email: googleProfile?.email,
-                image_name: googleProfile?.picture,
-                dob: googleProfile?.dob,
-                gender: googleProfile?.gender,
-                mobile: normalizedMobile,
-              }
+              id_token: googleProfile?.idToken,
+              full_name: fullName,
+              email: googleProfile?.email,
+              image_name: googleProfile?.picture,
+              dob: googleProfile?.dob,
+              gender: googleProfile?.gender,
+              mobile: normalizedMobile,
+            }
             : payload
         ),
       });
@@ -608,14 +608,14 @@ const SignupNew = () => {
               <span>Progress</span>
               <span>
                 {step === "name_input" ? "1/9" :
-                 step === "mobile_input" ? "2/9" :
-                 step === "mobile_otp_verify" ? "3/9" :
-                 step === "email_option" ? "4/9" :
-                 step === "email_input" ? "5/9" :
-                 step === "email_otp_verify" ? "6/9" :
-                 step === "password_input" ? "7/9" :
-                 step === "review_account" ? "8/9" :
-                 "9/9"}
+                  step === "mobile_input" ? "2/9" :
+                    step === "mobile_otp_verify" ? "3/9" :
+                      step === "email_option" ? "4/9" :
+                        step === "email_input" ? "5/9" :
+                          step === "email_otp_verify" ? "6/9" :
+                            step === "password_input" ? "7/9" :
+                              step === "review_account" ? "8/9" :
+                                "9/9"}
               </span>
             </div>
             <div className="w-full bg-zinc-100 rounded-full h-2 border border-zinc-200 dark:bg-zinc-900/50 dark:border-zinc-800">
@@ -623,14 +623,14 @@ const SignupNew = () => {
                 className="bg-gradient-to-r from-orange-500 to-amber-500 h-2 rounded-full transition-all duration-300"
                 style={{
                   width: step === "name_input" ? "11%" :
-                         step === "mobile_input" ? "22%" :
-                         step === "mobile_otp_verify" ? "33%" :
-                         step === "email_option" ? "44%" :
-                         step === "email_input" ? "55%" :
-                         step === "email_otp_verify" ? "66%" :
-                         step === "password_input" ? "77%" :
-                         step === "review_account" ? "88%" :
-                         "100%"
+                    step === "mobile_input" ? "22%" :
+                      step === "mobile_otp_verify" ? "33%" :
+                        step === "email_option" ? "44%" :
+                          step === "email_input" ? "55%" :
+                            step === "email_otp_verify" ? "66%" :
+                              step === "password_input" ? "77%" :
+                                step === "review_account" ? "88%" :
+                                  "100%"
                 }}
               />
             </div>
@@ -959,7 +959,7 @@ const SignupNew = () => {
                   <label className="text-sm font-bold text-orange-300 uppercase tracking-widest">Set Password</label>
                 </div>
                 <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs font-medium">Use at least 8 characters with uppercase, lowercase, and a number.</p>
-                
+
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -1021,7 +1021,7 @@ const SignupNew = () => {
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">Review Your Details</h2>
                 <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">Everything looks good? Proceed to create your account</p>
               </div>
-              
+
               {/* Name Box */}
               <div className="bg-gradient-to-br from-orange-950/30 to-amber-950/20 border-2 border-orange-500/50 rounded-2xl p-6 hover:border-orange-500/70 transition">
                 <div className="flex items-center gap-4">

@@ -42,7 +42,7 @@ const emptyMessages: Record<string, string> = {
 };
 
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.kirnagram.com";
 const REMIX_API_BASE = import.meta.env.VITE_REMIX_API_BASE || API_BASE;
 
 const Profile = () => {
@@ -217,7 +217,7 @@ const Profile = () => {
           const video = entry.target as HTMLVideoElement;
           if (entry.isIntersecting) {
             video.currentTime = 0;
-            video.play().catch(() => {});
+            video.play().catch(() => { });
             // Stop after 5 seconds
             setTimeout(() => {
               video.pause();
@@ -310,10 +310,10 @@ const Profile = () => {
           <div className="flex items-end justify-between mb-4">
             {/* Avatar */}
             <div className="relative">
-              <div 
+              <div
                 className={cn(
                   "w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full",
-                  myStories.length > 0 
+                  myStories.length > 0
                     ? "p-1 bg-gradient-to-tr from-orange-500 via-pink-500 to-yellow-400 cursor-pointer hover:scale-105 transition-transform"
                     : ""
                 )}
@@ -323,18 +323,18 @@ const Profile = () => {
                   }
                 }}
               >
-                 <img
-                   src={fallbackAvatar || avatar2}
-                   alt="Profile"
-                   className="w-full h-full rounded-full object-cover border-4 border-background"
-                 />
+                <img
+                  src={fallbackAvatar || avatar2}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover border-4 border-background"
+                />
               </div>
               <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full border-2 border-background" />
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2 mb-2">
-               <Link
+              <Link
                 to="/edit-profile"
                 className="flex items-center gap-2 px-4 py-2 glass-card hover:bg-gray-100 dark:hover:bg-muted/50 rounded-xl font-medium text-sm transition-all"
               >
@@ -377,57 +377,56 @@ const Profile = () => {
             </div>
             <div className="flex items-center gap-2">
               <p className="text-muted-foreground text-sm">
-                {`@${
-                  profile.username
+                {`@${profile.username
                     ? profile.username
                     : profile.public_id
                       ? profile.public_id
                       : profile.full_name?.toLowerCase().replace(/\s+/g, "") || "user"
-                }`}
+                  }`}
                 {profile.public_id && profile.username ? (
                   <span className="ml-2 text-xs font-medium text-muted-foreground">ID: {profile.public_id}</span>
                 ) : null}
               </p>
               {Boolean(profile.is_creator) && (
-                
-                  <img src={creatorLogo} alt="Creator" className="w-4 h-4 object-contain" />
-                
+
+                <img src={creatorLogo} alt="Creator" className="w-4 h-4 object-contain" />
+
               )}
             </div>
           </div>
 
           {/* Stats */}
-         <div className="flex gap-6 py-4 border-y border-border">
-  <div className="text-center">
-    <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
-      {stats.posts}
-    </p>
-    <p className="text-xs sm:text-sm text-muted-foreground">Posts</p>
-  </div>
+          <div className="flex gap-6 py-4 border-y border-border">
+            <div className="text-center">
+              <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
+                {stats.posts}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Posts</p>
+            </div>
 
-  {Boolean(profile.is_creator) && (
-    <div className="text-center">
-      <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
-        {stats.prompts}
-      </p>
-      <p className="text-xs sm:text-sm text-muted-foreground">Prompts</p>
-    </div>
-  )}
+            {Boolean(profile.is_creator) && (
+              <div className="text-center">
+                <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
+                  {stats.prompts}
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Prompts</p>
+              </div>
+            )}
 
-  <Link to={`/user/${profile.firebase_uid}/followers`} className="text-center hover:opacity-80 transition-opacity">
-    <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
-      {stats.followers}
-    </p>
-    <p className="text-xs sm:text-sm text-muted-foreground">Followers</p>
-  </Link>
+            <Link to={`/user/${profile.firebase_uid}/followers`} className="text-center hover:opacity-80 transition-opacity">
+              <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
+                {stats.followers}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Followers</p>
+            </Link>
 
-  <Link to={`/user/${profile.firebase_uid}/following`} className="text-center hover:opacity-80 transition-opacity">
-    <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
-      {stats.following}
-    </p>
-    <p className="text-xs sm:text-sm text-muted-foreground">Following</p>
-  </Link>
-</div>
+            <Link to={`/user/${profile.firebase_uid}/following`} className="text-center hover:opacity-80 transition-opacity">
+              <p className="text-lg sm:text-xl md:text-2xl font-display font-bold">
+                {stats.following}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Following</p>
+            </Link>
+          </div>
           {/* Social Media Icons Row */}
           <div className="flex gap-4 justify-center py-4 border-y border-border">
             {profile.instagram && (
@@ -448,21 +447,21 @@ const Profile = () => {
             {profile.x && (
               <a href={profile.x} target="_blank" rel="noopener noreferrer" title="X (Twitter)" className="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center hover:scale-110 transition-transform">
                 <svg className="w-5 h-5 text-gray-900 dark:text-white dark:text-black" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M22.46 5.924c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.963-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 16.11 4c-2.48 0-4.49 2.01-4.49 4.49 0 .352.04.695.116 1.022C7.728 9.36 4.1 7.6 1.67 4.98c-.386.664-.607 1.437-.607 2.26 0 1.56.795 2.94 2.005 3.75a4.48 4.48 0 0 1-2.034-.563v.057c0 2.18 1.55 4 3.6 4.42-.377.104-.775.16-1.185.16-.29 0-.57-.028-.845-.08.57 1.78 2.23 3.08 4.2 3.12A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.02c8.26 0 12.78-6.84 12.78-12.78 0-.195-.004-.39-.013-.583A9.1 9.1 0 0 0 24 4.59a8.98 8.98 0 0 1-2.54.698z"/>
+                  <path d="M22.46 5.924c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.963-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 16.11 4c-2.48 0-4.49 2.01-4.49 4.49 0 .352.04.695.116 1.022C7.728 9.36 4.1 7.6 1.67 4.98c-.386.664-.607 1.437-.607 2.26 0 1.56.795 2.94 2.005 3.75a4.48 4.48 0 0 1-2.034-.563v.057c0 2.18 1.55 4 3.6 4.42-.377.104-.775.16-1.185.16-.29 0-.57-.028-.845-.08.57 1.78 2.23 3.08 4.2 3.12A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.02c8.26 0 12.78-6.84 12.78-12.78 0-.195-.004-.39-.013-.583A9.1 9.1 0 0 0 24 4.59a8.98 8.98 0 0 1-2.54.698z" />
                 </svg>
               </a>
             )}
             {profile.linkedin && (
               <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center hover:scale-110 transition-transform">
                 <svg className="w-5 h-5 text-gray-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-8.5 19h-3v-8h3v8zm-1.5-9.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm13.5 9.268h-3v-4.5c0-1.07-.93-2-2-2s-2 .93-2 2v4.5h-3v-8h3v1.085c.41-.63 1.36-1.085 2.5-1.085 1.93 0 3.5 1.57 3.5 3.5v4.5z"/>
+                  <path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-8.5 19h-3v-8h3v8zm-1.5-9.268c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm13.5 9.268h-3v-4.5c0-1.07-.93-2-2-2s-2 .93-2 2v4.5h-3v-8h3v1.085c.41-.63 1.36-1.085 2.5-1.085 1.93 0 3.5 1.57 3.5 3.5v4.5z" />
                 </svg>
               </a>
             )}
             {profile.whatsapp && (
               <a href={profile.whatsapp} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:scale-110 transition-transform">
                 <svg className="w-5 h-5 text-gray-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                 </svg>
               </a>
             )}
@@ -478,25 +477,25 @@ const Profile = () => {
                 {profile.location || "Location not set"}
               </span>
               <span className="flex items-center gap-1">
-              <LinkIcon className="w-4 h-4" />
-               {profile.website ? (
-               <a
-               href={websiteLink}
-               target="_blank"
-               rel="noreferrer"
-               className="text-primary hover:underline"
-               >
-               {profile.website}
-                </a>
-              ) : (
-              "No website"
-             )}
-            </span>
+                <LinkIcon className="w-4 h-4" />
+                {profile.website ? (
+                  <a
+                    href={websiteLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {profile.website}
+                  </a>
+                ) : (
+                  "No website"
+                )}
+              </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 Joined {profile.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'}
               </span>
-             
+
             </div>
           </div>
         </div>
