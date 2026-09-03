@@ -88,11 +88,11 @@ export default function RemixViewer() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-center w-full h-[60vh] bg-black rounded-xl mb-6">
+            <div className="flex items-center justify-center w-full max-w-2xl bg-black rounded-xl mb-6 p-2">
               <img
                 src={current.image_url}
                 alt="Remix"
-                className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
+                className="w-full h-auto rounded-xl shadow-lg"
               />
             </div>
 

@@ -718,7 +718,7 @@ const Remix = () => {
 
       {promptInfo.image ? (
         <div className="rounded-3xl border border-border/70 overflow-hidden">
-          <img src={promptInfo.image} alt="Reference" className="w-full h-64 object-cover rounded-xl" />
+          <img src={promptInfo.image} alt="Reference" className="w-full h-auto rounded-xl block" />
         </div>
       ) : null}
 
@@ -773,7 +773,7 @@ const Remix = () => {
         </div>
         {uploadedPreview ? (
           <div className="relative">
-            <img src={uploadedPreview} alt="Uploaded" className="w-full h-64 object-cover rounded-xl" />
+            <img src={uploadedPreview} alt="Uploaded" className="w-full h-auto rounded-xl block" />
             <button
               onClick={() => {
                 setUploadedFile(null);
@@ -1131,8 +1131,7 @@ const Remix = () => {
                 <img
                   src={outputUrl}
                   alt="Remix output"
-                  className="w-full max-h-[520px] object-contain rounded-3xl border border-border/70 bg-muted/50"
-                  style={{ aspectRatio: ratio }}
+                  className="w-full h-auto rounded-3xl border border-border/70 bg-muted/50 block"
                 />
                 <div className="grid gap-3 sm:grid-cols-3">
                   <Button

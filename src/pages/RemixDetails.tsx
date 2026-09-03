@@ -433,12 +433,12 @@ const RemixDetails = () => {
           {/* Image section */}
           <div className="lg:col-span-2">
             <Card className="glass-card border border-border/60 p-5 overflow-hidden">
-              <div className="w-full flex items-center justify-center min-h-[400px] bg-gradient-to-br from-muted/60 to-background rounded-xl border border-border/60 shadow-lg overflow-hidden">
+              <div className="w-full flex items-center justify-center bg-gradient-to-br from-muted/60 to-background rounded-xl border border-border/60 shadow-lg overflow-hidden p-2">
                 {remix.image_url ? (
                   <img
                     src={remix.image_url}
                     alt="Remix"
-                    className="max-w-full max-h-[600px] object-contain rounded-xl shadow-md"
+                    className="w-full h-auto rounded-xl shadow-md"
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground">

@@ -310,8 +310,7 @@ function getUserAvatar(user?: { image_name?: string; user_image?: string; gender
     <video
       ref={videoRef}
       src={image}
-      className="w-full object-cover"
-      style={{ aspectRatio: ratio?.replace(":", "/") || "9 / 16" }}
+      className="w-full h-auto block"
       loop
       playsInline
       muted={isMuted}
@@ -337,17 +336,16 @@ function getUserAvatar(user?: { image_name?: string; user_image?: string; gender
   </div>
 ) : (
   useImageCarousel ? (
-    <div className="relative w-full" style={{ aspectRatio: ratio?.replace(":", "/") || "4 / 5" }}>
-      <Carousel className="w-full h-full" opts={{ loop: true }}>
-        <CarouselContent className="h-full">
+    <div className="relative w-full">
+      <Carousel className="w-full" opts={{ loop: true }}>
+        <CarouselContent>
           {carouselImages.map((img, index) => (
-            <CarouselItem key={`${img}-${index}`} className="h-full">
-              <button className="w-full h-full" onClick={onPostClick}>
+            <CarouselItem key={`${img}-${index}`}>
+              <button className="w-full block" onClick={onPostClick}>
                 <img
                   src={img}
                   alt={`Post sample ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  style={{ aspectRatio: ratio?.replace(":", "/") || "4 / 5" }}
+                  className="w-full h-auto block"
                 />
               </button>
             </CarouselItem>
@@ -361,12 +359,11 @@ function getUserAvatar(user?: { image_name?: string; user_image?: string; gender
       </div>
     </div>
   ) : (
-    <button className="relative w-full" onClick={onPostClick}>
+    <button className="relative w-full block" onClick={onPostClick}>
       <img
         src={carouselImages[0] || image}
         alt="Post"
-        className="w-full object-cover"
-        style={{ aspectRatio: ratio?.replace(":", "/") || "4 / 5" }}
+        className="w-full h-auto block"
       />
     </button>
   )

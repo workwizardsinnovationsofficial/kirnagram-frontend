@@ -791,8 +791,7 @@ const PostsView = () => {
                                 if (el) videoRefs.current[post._id] = el;
                               }}
                               src={post.video_url}
-                              className="w-full object-cover"
-                              style={{ aspectRatio: post.ratio?.replace(":", "/") || "9 / 16" }}
+                              className="w-full h-auto block"
                               loop
                               muted={isMuted}
                               playsInline
@@ -815,8 +814,7 @@ const PostsView = () => {
                           <img
                             src={post.image_url}
                             alt={post.caption || "Post"}
-                            className="w-full object-cover"
-                            style={{ aspectRatio: post.ratio?.replace(":", "/") || "1 / 1" }}
+                            className="w-full h-auto block"
                           />
                         )}
                         {post.is_prompt_post && (

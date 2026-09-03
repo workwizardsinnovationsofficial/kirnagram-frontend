@@ -137,11 +137,11 @@ function FeedKirnagramAd({ placement = "home_banner" }: { placement?: string }) 
         <span className="text-xs text-muted-foreground">Kirnagram Ad</span>
       </div>
 
-      <div className="bg-white flex items-center justify-center" style={{ aspectRatio: "4 / 5" }}>
+      <div className="bg-white flex items-center justify-center">
         {ad.video_preview_url ? (
-          <video src={ad.video_preview_url} className="w-full h-full object-cover" autoPlay muted playsInline />
+          <video src={ad.video_preview_url} className="w-full h-auto block" autoPlay muted playsInline />
         ) : (
-          <img src={ad.photo_preview_url} alt={ad.ad_name || "Ad"} className="w-full h-full object-cover" />
+          <img src={ad.photo_preview_url} alt={ad.ad_name || "Ad"} className="w-full h-auto block" />
         )}
       </div>
     </div>
