@@ -1,12 +1,14 @@
 export interface LegalDocumentItem {
   title: string;
-  pdfUrl: string;
+  pdfUrl?: string;
+  link?: string;
 }
 
 export const legalDocuments: Record<string, LegalDocumentItem> = {
   about: {
     title: "About Kirnagram",
     pdfUrl: "https://pub-c7720ab23a5745a09cadfeedfa3199d3.r2.dev/privacy-policy/1.%20About%20Us.pdf",
+    link: "/about-kirnagram",
   },
   careers: {
     title: "Careers",
@@ -15,6 +17,7 @@ export const legalDocuments: Record<string, LegalDocumentItem> = {
   helpCenter: {
     title: "Help Center",
     pdfUrl: "https://pub-c7720ab23a5745a09cadfeedfa3199d3.r2.dev/privacy-policy/4.%20Creator%20%26%20User%20Support%20FAQ.pdf",
+    link: "/HelpCenter",
   },
   contact: {
     title: "Contact Us",
@@ -23,10 +26,12 @@ export const legalDocuments: Record<string, LegalDocumentItem> = {
   terms: {
     title: "Terms of Service",
     pdfUrl: "https://pub-c7720ab23a5745a09cadfeedfa3199d3.r2.dev/privacy-policy/2.%20Terms%20of%20Service.pdf",
+    link: "/terms",
   },
   privacy: {
     title: "Privacy Policy",
     pdfUrl: "https://pub-c7720ab23a5745a09cadfeedfa3199d3.r2.dev/privacy-policy/1.%20Privacy%20Policy.pdf",
+    link: "/privacy-policy",
   },
   community: {
     title: "Community Guidelines",

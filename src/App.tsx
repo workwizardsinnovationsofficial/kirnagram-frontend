@@ -151,7 +151,8 @@ const App = () => {
                   <Route path="/ai-creator/prompts" element={<PrivateRoute><CreatorPrompts /></PrivateRoute>} />
                   <Route path="/ai-creator/add-prompt" element={<PrivateRoute><AddNewPrompt /></PrivateRoute>} />
                   <Route path="/ai-creator/edit-profile" element={<PrivateRoute><EditCreatorProfile /></PrivateRoute>} />
-                  <Route path="/privacy" element={<PrivateRoute><Privacy /></PrivateRoute>} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/privacy-policy" element={<Privacy />} />
                   <Route path="/terms" element={<PrivateRoute><Terms /></PrivateRoute>} />
                   <Route path="/about-kirnagram" element={<PrivateRoute><AboutKirnagram /></PrivateRoute>} />
                   <Route path="/become-publisher" element={<PrivateRoute><PublisherLanding /></PrivateRoute>} />

@@ -197,7 +197,7 @@ const Settings = () => {
         {
           icon: FileText,
           label: legalDocuments.privacy.title,
-          externalUrl: legalDocuments.privacy.pdfUrl,
+          link: "/privacy-policy",
         },
         {
           icon: FileText,
@@ -324,14 +324,9 @@ const Settings = () => {
                   {group.subtitle}
                 </h3>
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
-                  {group.items.map((item, index) => (
-                    <div key={item.label}>
-                      <a
-                        href={item.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors w-full"
-                      >
+                  {group.items.map((item: any, index) => {
+                    const rowContent = (
+                      <>
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <item.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                           <span className="text-sm font-normal text-foreground break-words leading-tight">
@@ -341,12 +336,34 @@ const Settings = () => {
                         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                           <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </div>
-                      </a>
-                      {index < group.items.length - 1 && (
-                        <div className="h-px bg-border ml-12" />
-                      )}
-                    </div>
-                  ))}
+                      </>
+                    );
+
+                    return (
+                      <div key={item.label}>
+                        {item.link ? (
+                          <Link
+                            to={item.link}
+                            className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors w-full"
+                          >
+                            {rowContent}
+                          </Link>
+                        ) : (
+                          <a
+                            href={item.externalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition-colors w-full"
+                          >
+                            {rowContent}
+                          </a>
+                        )}
+                        {index < group.items.length - 1 && (
+                          <div className="h-px bg-border ml-12" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
