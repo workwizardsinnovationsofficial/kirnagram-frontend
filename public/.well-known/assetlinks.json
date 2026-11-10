@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kirnagram.app",
+      "sha256_cert_fingerprints": [
+        "EF:57:96:2B:DC:7F:F8:21:DC:14:E3:16:C1:57:A7:E3:FE:0E:4E:8A:FA:25:76:6B:4C:48:32:AD:0A:EE:D5:39",
+        "D0:3E:88:CC:D6:65:F0:B2:FC:A9:F7:E2:90:AC:E1:30:5D:4C:8B:CA:02:82:B1:FE:22:80:4E:D1:97:21:73:4D",
+        "93:29:A1:E9:7D:56:09:76:DF:53:47:A7:8A:50:FD:5C:EE:A6:00:9C:29:0B:F1:3F:5F:FA:89:A1:5F:B6:D1:ED"
+      ]
+    }
+  }
+]
